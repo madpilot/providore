@@ -1,0 +1,29 @@
+{
+  "name": "home_iot_manager_server",
+  "version": "0.0.1",
+  "description": "Simple IoT provisioning service",
+  "main": "dist/index.js",
+  "scripts": {
+    "serve": "node dist/index.js",
+    "build": "tsc --build tsconfig.json",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/madpilot/home_iot_manager.git"
+  },
+  "author": "Myles Eftos",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/madpilot/home_iot_manager/issues"
+  },
+  "homepage": "https://github.com/madpilot/home_iot_manager#readme",
+  "devDependencies": {
+    "@types/express": "^4.17.11",
+    "jest": "^26.6.3",
+    "typescript": "^4.1.5"
+  },
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
