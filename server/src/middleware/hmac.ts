@@ -1,7 +1,15 @@
 import { NextFunction, Request, Response } from "express";
 import crypto from "crypto";
 
-export type Devices = Record<string, string>;
+export interface Device {
+  secretKey: string;
+  firmware: {
+    type: string;
+    version: string;
+  };
+}
+
+export type Devices = Record<string, Device>;
 
 interface AuthorizationObject {
   "key-id": string;
@@ -52,8 +60,8 @@ export function hmacAuthorization(devices: Devices) {
       return next("router");
     }
 
-    const secret = devices[authorization["key-id"]];
-    if (!secret) {
+    const device = devices[authorization["key-id"]];
+    if (!device) {
       res.sendStatus(401);
       return next("router");
     }
@@ -63,7 +71,7 @@ export function hmacAuthorization(devices: Devices) {
     )}\n${req.get("expiry")}`;
 
     const buffer = Buffer.from(message, "utf8");
-    const hash = crypto.createHmac("sha256", secret);
+    const hash = crypto.createHmac("sha256", device.secretKey);
     hash.update(buffer);
     const signature = hash.digest("base64");
 
