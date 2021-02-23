@@ -1,6 +1,6 @@
 import express, { Request } from "express";
 import { Devices, hmacAuthorization } from "./middleware/hmac";
-import { readFile, readFileSync, stat } from "fs";
+import { readFileSync } from "fs";
 import path from "path";
 
 const app = express();
@@ -14,15 +14,26 @@ const devices: Devices = JSON.parse(
 
 app.use(hmacAuthorization(devices));
 
-app.get("/config.json", (req: Request & { device: string }, res) => {
-  readFile(`./devices/config/${req.device}.json`, (err, data) => {
-    if (err) {
+app.get("/config.json", async (req: Request & { device: string }, res) => {
+  const filePath = path.join(
+    __dirname,
+    "..",
+    "devices",
+    "config",
+    `${req.device}.json`
+  );
+
+  try {
+    res.contentType("json");
+    res.sendFile(filePath);
+  } catch (err) {
+    if (err.code === "ENOENT") {
       res.sendStatus(404);
     } else {
-      res.contentType("json");
-      res.send(data);
+      console.error(err.message);
+      res.sendStatus(500);
     }
-  });
+  }
 });
 
 app.post("/certificates/request", (_req, res) => {
@@ -46,24 +57,17 @@ app.get("/client.cert.pem", (req: Request & { device: string }, res) => {
     `${req.device}.cert.pem`
   );
 
-  stat(filePath, (err, status) => {
-    if (err) {
-      if (err.code == "ENOENT") {
-        res.sendStatus(404);
-      } else {
-        console.error(err.message);
-        res.sendStatus(500);
-      }
-      return;
-    }
-
-    if (status.isFile()) {
-      res.contentType("application/x-pem-file");
-      res.sendFile(filePath);
+  try {
+    res.contentType("application/x-pem-file");
+    res.sendFile(filePath);
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      res.sendStatus(404);
     } else {
+      console.error(err.message);
       res.sendStatus(500);
     }
-  });
+  }
 });
 
 app.get("/firmware.bin", (req: Request & { device: string }, res) => {
@@ -73,21 +77,33 @@ app.get("/firmware.bin", (req: Request & { device: string }, res) => {
     return;
   }
 
-  res.contentType("application/octet-stream");
-  res.sendFile(
-    path.join(
-      __dirname,
-      "..",
-      "devices",
-      "firmware",
-      device.firmware.type,
-      device.firmware.version,
-      "firmware.bin"
-    )
+  const filePath = path.join(
+    __dirname,
+    "..",
+    "devices",
+    "firmware",
+    device.firmware.type,
+    device.firmware.version,
+    "firmware.bin"
   );
+
+  try {
+    res.contentType("application/octet-stream");
+    res.sendFile(filePath);
+  } catch (err) {
+    if (err.code === "ENOENT") {
+      res.sendStatus(404);
+    } else {
+      console.error(err.message);
+      res.sendStatus(500);
+    }
+  }
 });
 
 // TODO: Add either a OCSP or stream out a CRL file
+// CRL, while not the latest and greatest probably makes the most sense
+// here as the only server that needs to validate the certificate is
+// MQTT, so having a the over head of OCSP seems like overkill at the moment...
 
 app.listen(port, () => {
   console.log(`Server listening at ${protocol}://${server}:${port}`);
