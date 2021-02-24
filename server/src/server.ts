@@ -123,7 +123,6 @@ export function startServer({
   // MQTT, so having a the over head of OCSP seems like overkill at the moment...
 
   if (protocol == "https") {
-    console.log(sslCertPath, sslKeyPath, caCertPath);
     const httpsServer = https.createServer(
       {
         cert: readFileSync(sslCertPath),
