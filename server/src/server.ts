@@ -3,6 +3,9 @@ import { Devices, hmacAuthorization } from "./middleware/hmac";
 import { readFileSync } from "fs";
 import path from "path";
 
+import http from "http";
+import https from "https";
+
 const app = express();
 
 const devices: Devices = JSON.parse(
@@ -13,9 +16,19 @@ export interface ServerConfig {
   protocol: "http" | "https";
   bind: string;
   port: number;
+  sslCertPath?: string | undefined;
+  sslKeyPath?: string | undefined;
+  caCertPath?: string | undefined;
 }
 
-export function startServer({ protocol, bind, port }: ServerConfig) {
+export function startServer({
+  protocol,
+  bind,
+  port,
+  sslCertPath,
+  sslKeyPath,
+  caCertPath,
+}: ServerConfig) {
   app.use(hmacAuthorization(devices));
 
   app.get("/config.json", async (req: Request & { device: string }, res) => {
@@ -109,7 +122,23 @@ export function startServer({ protocol, bind, port }: ServerConfig) {
   // here as the only server that needs to validate the certificate is
   // MQTT, so having a the over head of OCSP seems like overkill at the moment...
 
-  app.listen(port, () => {
-    console.log(`Server listening at ${protocol}://${bind}:${port}`);
-  });
+  if (protocol == "https") {
+    console.log(sslCertPath, sslKeyPath, caCertPath);
+    const httpsServer = https.createServer(
+      {
+        cert: readFileSync(sslCertPath),
+        key: readFileSync(sslKeyPath),
+        ca: readFileSync(caCertPath),
+      },
+      app
+    );
+    httpsServer.listen(port, () => {
+      console.log(`HTTPS server listening at ${protocol}://${bind}:${port}`);
+    });
+  } else {
+    const httpServer = http.createServer(app);
+    httpServer.listen(port, () => {
+      console.log(`HTTP server listening at ${protocol}://${bind}:${port}`);
+    });
+  }
 }
