@@ -22,12 +22,10 @@ function isAuthorizationObject(obj: any): obj is AuthorizationObject {
   );
 }
 
+export type HMACRequest = Request & { device: string };
+
 export function hmacAuthorization(devices: Devices) {
-  return (
-    req: Request & { device?: string },
-    res: Response,
-    next: NextFunction
-  ) => {
+  return (req: HMACRequest, res: Response, next: NextFunction) => {
     const authorizationHeader = req.get("authorization");
 
     if (!authorizationHeader) {
@@ -49,11 +47,10 @@ export function hmacAuthorization(devices: Devices) {
         const [key, ...values] = kv.replace(/"/g, "").split("=");
         return [key, values.join("=")];
       })
-      .reduce<Record<string, string>>((t, x: [string, string]) => {
-        const key = x[0];
-        const value = x[1];
-        return { ...t, [key]: value };
-      }, {});
+      .reduce<Record<string, string>>(
+        (t, [key, value]: [string, string]) => ({ ...t, [key]: value }),
+        {}
+      );
 
     if (!isAuthorizationObject(authorization)) {
       res.sendStatus(401);

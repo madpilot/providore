@@ -12,7 +12,7 @@
     "type": "git",
     "url": "git+https://github.com/madpilot/home_iot_manager.git"
   },
-  "author": "Myles Eftos",
+  "author": "Myles Eftos <myles@madpilot.com.au>",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/madpilot/home_iot_manager/issues"

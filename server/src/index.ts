@@ -16,6 +16,16 @@ program.option(
 );
 program.option("--cert-ca <path>", "Path to a TLS ca cert chain.");
 
+program.option(
+  "--config-store <path>",
+  "Folder that stores device config files"
+);
+program.option("--firmware-store <path>", "Folder that stores device firmware");
+program.option(
+  "--certificate-store <path>",
+  "Folder that stores device certificates"
+);
+
 program.parse(process.argv);
 
 const options = program.opts();
@@ -27,4 +37,7 @@ startServer({
   sslCertPath: options.cert,
   sslKeyPath: options.certKey,
   caCertPath: options.certCa,
+  configStore: options.configStore,
+  certificateStore: options.certificateStore,
+  firmwareStore: options.firmwareStore,
 });
