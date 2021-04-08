@@ -1,4 +1,4 @@
-import { configHandler } from "./configHandler";
+import { certificateHandler } from "./certificateHandler";
 import { join } from "path";
 import { Response } from "express";
 import { HMACRequest } from "middleware/hmac";
@@ -15,11 +15,11 @@ class MockError extends Error {
   }
 }
 
-describe("configHandler", () => {
+describe("certificateHandler", () => {
   const storePath = join(__dirname, "..", "test", "store");
-  const subject = () => configHandler(storePath);
+  const subject = () => certificateHandler(storePath);
 
-  describe("config does not exist", () => {
+  describe("certificate does not exist", () => {
     let req: HMACRequest;
     let res: Response;
     let device: string;
@@ -39,7 +39,9 @@ describe("configHandler", () => {
       const handler = subject();
       await handler(req, res);
       expect(res.contentType as jest.Mock).toBeCalledTimes(1);
-      expect(res.contentType as jest.Mock).toBeCalledWith("json");
+      expect(res.contentType as jest.Mock).toBeCalledWith(
+        "application/x-pem-file"
+      );
     });
 
     describe("when the file is found", () => {
@@ -49,7 +51,7 @@ describe("configHandler", () => {
 
         expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
         expect(res.sendFile as jest.Mock).toBeCalledWith(
-          path.join(storePath, "abc123.json")
+          path.join(storePath, "abc123.cert.pem")
         );
       });
     });
