@@ -1,5 +1,6 @@
 import { NextFunction, Request, response, Response } from "express";
 import crypto from "crypto";
+import { isPast, parseISO } from "date-fns";
 
 export interface Device {
   secretKey: string;
@@ -86,6 +87,23 @@ export function hmacAuthorization(devices: Devices) {
       console.error("Invalid authorization header");
       res.sendStatus(401);
       return next("router");
+    }
+
+    const created = parseISO(req.get("created-at"));
+    if (created.toString() === "Invalid Date") {
+      res.sendStatus(400);
+      return next(new Error("Invalid created-at date"));
+    }
+
+    const expiry = parseISO(req.get("expiry"));
+    if (expiry.toString() === "Invalid Date") {
+      res.sendStatus(400);
+      return next(new Error("Invalid expiry"));
+    }
+
+    if (isPast(expiry)) {
+      res.sendStatus(401);
+      return next(new Error("Authorization header has expired"));
     }
 
     const device = devices[authorization["key-id"]];

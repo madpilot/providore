@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "commander": "^7.1.0",
+    "date-fns": "^2.20.0",
     "express": "^4.17.1"
   }
 }

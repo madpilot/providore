@@ -120,10 +120,154 @@ describe("hmac middleware", () => {
     });
   });
 
+  describe("Unparsable created-at header", () => {
+    beforeEach(() => {
+      const created = new Date(new Date().getTime() - 60 * 60 * 1000);
+      const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+      const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+      const signature = sign(message, "secret");
+
+      req = ({
+        method: "get",
+        path: "path",
+        get: jest.fn((header) => {
+          switch (header) {
+            case "authorization":
+              return `Hmac key-id="abc123", signature="${signature}"`;
+            case "created-at":
+              return "Hello!";
+            case "expiry":
+              return expires.toISOString();
+            default:
+              return undefined;
+          }
+        }),
+      } as unknown) as HMACRequest;
+    });
+
+    it("returns a 400", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(400);
+    });
+
+    it("sets an error message", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(nextFunction as jest.Mock).toBeCalledTimes(1);
+      expect(nextFunction as jest.Mock).toHaveBeenCalledWith(expect.any(Error));
+
+      expect(() => {
+        throw (nextFunction as jest.Mock).mock.calls[0];
+      }).toThrowError(/Invalid created-at date/);
+    });
+  });
+
+  describe("Unparsable expiry header", () => {
+    beforeEach(() => {
+      const created = new Date(new Date().getTime() - 60 * 60 * 1000);
+      const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+      const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+      const signature = sign(message, "secret");
+
+      req = ({
+        method: "get",
+        path: "path",
+        get: jest.fn((header) => {
+          switch (header) {
+            case "authorization":
+              return `Hmac key-id="abc123", signature="${signature}"`;
+            case "created-at":
+              return created.toISOString();
+            case "expiry":
+              return "hello!";
+            default:
+              return undefined;
+          }
+        }),
+      } as unknown) as HMACRequest;
+    });
+
+    it("returns a 400", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(400);
+    });
+
+    it("sets an error message", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(nextFunction as jest.Mock).toBeCalledTimes(1);
+      expect(nextFunction as jest.Mock).toHaveBeenCalledWith(expect.any(Error));
+
+      expect(() => {
+        throw (nextFunction as jest.Mock).mock.calls[0];
+      }).toThrowError(/Invalid expiry/);
+    });
+  });
+
+  describe("Expired authorization header", () => {
+    beforeEach(() => {
+      const created = new Date(new Date().getTime() - 60 * 60 * 1000);
+      const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+      const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+      const signature = sign(message, "secret");
+
+      req = ({
+        method: "get",
+        path: "path",
+        get: jest.fn((header) => {
+          switch (header) {
+            case "authorization":
+              return `Hmac key-id="abc123", signature="${signature}"`;
+            case "created-at":
+              return created.toISOString();
+            case "expiry":
+              return expires.toISOString();
+            default:
+              return undefined;
+          }
+        }),
+      } as unknown) as HMACRequest;
+    });
+
+    it("returns a 401", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(401);
+    });
+
+    it("sets an error message", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(nextFunction as jest.Mock).toBeCalledTimes(1);
+      expect(nextFunction as jest.Mock).toHaveBeenCalledWith(expect.any(Error));
+
+      expect(() => {
+        throw (nextFunction as jest.Mock).mock.calls[0];
+      }).toThrowError(/Authorization header has expired/);
+    });
+  });
+
   describe("Valid Hmac authorization header", () => {
     describe("Unknown device", () => {
       beforeEach(() => {
-        const message = "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21";
+        const created = new Date();
+        const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+        const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
         const signature = sign(message, "secret");
 
         req = ({
@@ -134,9 +278,9 @@ describe("hmac middleware", () => {
               case "authorization":
                 return `Hmac key-id="xyz123", signature="${signature}"`;
               case "created-at":
-                return "2021-04-08T11:00:21";
+                return created.toISOString();
               case "expiry":
-                return "2021-04-08T11:15:21";
+                return expires.toISOString();
               default:
                 return undefined;
             }
@@ -163,7 +307,10 @@ describe("hmac middleware", () => {
 
     describe("Invalid signature", () => {
       beforeEach(() => {
-        const message = "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21";
+        const created = new Date();
+        const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+        const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
         const signature = sign(message, "notsecret");
 
         req = ({
@@ -174,9 +321,9 @@ describe("hmac middleware", () => {
               case "authorization":
                 return `Hmac key-id="abc123", signature="${signature}"`;
               case "created-at":
-                return "2021-04-08T11:00:21";
+                return created.toISOString();
               case "expiry":
-                return "2021-04-08T11:15:21";
+                return expires.toISOString();
               default:
                 return undefined;
             }
@@ -203,7 +350,10 @@ describe("hmac middleware", () => {
 
     describe("Valid signature", () => {
       beforeEach(() => {
-        const message = "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21";
+        const created = new Date();
+        const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+        const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
         const signature = sign(message, "secret");
 
         req = ({
@@ -214,9 +364,9 @@ describe("hmac middleware", () => {
               case "authorization":
                 return `Hmac key-id="abc123", signature="${signature}"`;
               case "created-at":
-                return "2021-04-08T11:00:21";
+                return created.toISOString();
               case "expiry":
-                return "2021-04-08T11:15:21";
+                return expires.toISOString();
               default:
                 return undefined;
             }
