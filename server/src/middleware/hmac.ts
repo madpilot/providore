@@ -24,6 +24,18 @@ function isAuthorizationObject(obj: any): obj is AuthorizationObject {
 
 export type HMACRequest = Request & { device: string };
 
+export function sign(message: string | Buffer, secret: string): string {
+  let buffer: Buffer;
+  if (message instanceof Buffer) {
+    buffer = message;
+  } else {
+    buffer = Buffer.from(message, "utf8");
+  }
+  const hash = crypto.createHmac("sha256", secret);
+  hash.update(buffer);
+  return hash.digest("base64");
+}
+
 export function hmacAuthorization(devices: Devices) {
   return (req: HMACRequest, res: Response, next: NextFunction) => {
     const authorizationHeader = req.get("authorization");
@@ -37,7 +49,7 @@ export function hmacAuthorization(devices: Devices) {
 
     if (type !== "Hmac") {
       res.sendStatus(400);
-      return next("Unsupported authorization method");
+      return next(new Error("Unsupported authorization method"));
     }
 
     const authorization = mac
@@ -53,12 +65,14 @@ export function hmacAuthorization(devices: Devices) {
       );
 
     if (!isAuthorizationObject(authorization)) {
+      console.error("Invalid authorization header");
       res.sendStatus(401);
       return next("router");
     }
 
     const device = devices[authorization["key-id"]];
     if (!device) {
+      console.error("Device not found");
       res.sendStatus(401);
       return next("router");
     }
@@ -67,12 +81,10 @@ export function hmacAuthorization(devices: Devices) {
       "created-at"
     )}\n${req.get("expiry")}`;
 
-    const buffer = Buffer.from(message, "utf8");
-    const hash = crypto.createHmac("sha256", device.secretKey);
-    hash.update(buffer);
-    const signature = hash.digest("base64");
+    const signature = sign(message, device.secretKey);
 
     if (signature !== authorization.signature) {
+      console.error("Invalid signature");
       res.sendStatus(401);
       return next("router");
     }
