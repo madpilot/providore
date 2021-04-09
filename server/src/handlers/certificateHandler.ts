@@ -1,16 +1,21 @@
 import { Response } from "express";
-import { HMACRequest } from "middleware/hmac";
+import { Devices, HMACRequest, sign } from "../middleware/hmac";
 import path from "path";
+import { readFile } from "fs/promises";
 
 export function certificateHandler(
-  certificateStore: string
+  certificateStore: string,
+  devices: Devices
 ): (req: HMACRequest, res: Response) => void {
   return async (req, res) => {
-    const filePath = path.join(certificateStore, `${req.device}.cert.pem`);
-
+    const device = devices[req.device];
     try {
+      const filePath = path.join(certificateStore, `${req.device}.cert.pem`);
       res.contentType("application/x-pem-file");
       res.sendFile(filePath);
+
+      const signature = sign(await readFile(filePath), device.secretKey);
+      res.set("signature", signature);
     } catch (err) {
       if (err.code === "ENOENT") {
         res.sendStatus(404);

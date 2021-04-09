@@ -1,7 +1,7 @@
 import { certificateHandler } from "./certificateHandler";
 import { join } from "path";
 import { Response } from "express";
-import { HMACRequest } from "middleware/hmac";
+import { HMACRequest } from "../middleware/hmac";
 import path from "path";
 
 class MockError extends Error {
@@ -17,7 +17,13 @@ class MockError extends Error {
 
 describe("certificateHandler", () => {
   const storePath = join(__dirname, "..", "test", "store");
-  const subject = () => certificateHandler(storePath);
+  const subject = () =>
+    certificateHandler(storePath, {
+      abc123: {
+        secretKey: "secret",
+        firmware: { type: "type", version: "version" },
+      },
+    });
 
   describe("certificate does not exist", () => {
     let req: HMACRequest;
@@ -30,6 +36,7 @@ describe("certificateHandler", () => {
         contentType: jest.fn(),
         sendFile: jest.fn(),
         sendStatus: jest.fn(),
+        set: jest.fn(),
       } as unknown) as Response;
 
       device = "abc123";
@@ -52,6 +59,17 @@ describe("certificateHandler", () => {
         expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
         expect(res.sendFile as jest.Mock).toBeCalledWith(
           path.join(storePath, "abc123.cert.pem")
+        );
+      });
+
+      it("signs the payload", async () => {
+        const handler = subject();
+        await handler(req, res);
+
+        expect(res.set as jest.Mock).toBeCalledTimes(1);
+        expect(res.set as jest.Mock).toBeCalledWith(
+          "signature",
+          "WQd+dU8P2hEmzrsSVzzNxT3RwpnoLl2LNSebSBRH6KU="
         );
       });
     });
