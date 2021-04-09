@@ -2,6 +2,11 @@
 
 Providore is a simple, yet secure IoT provisioning system for your home IoT network. It runs over HTTP and HTTPS.
 
+## Getting started
+
+It's still early days - we aren't ready for prime time yet. Though if your interested in helping and know Typescript or C (and the Espressif IDF) feel free to fork and submitting
+PRs!
+
 ## Security
 
 There are a number of hurdles to jump when provisioning IoT devices: How do you configure a device? How do you update x509 certificates when connecting to MQTT? Doing these tasks
@@ -15,8 +20,8 @@ An example HTTP/S request looks like this:
 
 ```
 GET /config.json
-Authorization: 'Hmac key-id="d8fa0180", signature="QuvQRPmg6Z9fjpF/+PAtrRR4arXU5AYVBCsLrOcVDm0="',
-Created-At: '2021-04-09T13:01:24.154Z',
+Authorization: 'Hmac key-id="d8fa0180", signature="QuvQRPmg6Z9fjpF/+PAtrRR4arXU5AYVBCsLrOcVDm0="'
+Created-At: '2021-04-09T13:01:24.154Z'
 Expiry: '2021-04-09T13:11:24.154Z'
 ```
 
