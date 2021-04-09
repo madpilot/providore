@@ -1,5 +1,5 @@
 {
-  "name": "home_iot_manager_server",
+  "name": "providore",
   "version": "0.0.1",
   "description": "Simple IoT provisioning service",
   "main": "dist/index.js",
@@ -9,14 +9,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/madpilot/home_iot_manager.git"
+    "url": "git+https://github.com/madpilot/providore.git"
   },
   "author": "Myles Eftos <myles@madpilot.com.au>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/madpilot/home_iot_manager/issues"
+    "url": "https://github.com/madpilot/providore/issues"
   },
-  "homepage": "https://github.com/madpilot/home_iot_manager#readme",
+  "homepage": "https://github.com/madpilot/providore#readme",
   "devDependencies": {
     "@types/commander": "^2.12.2",
     "@types/express": "^4.17.11",
