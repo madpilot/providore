@@ -18,11 +18,13 @@ class MockError extends Error {
 
 describe("configHandler", () => {
   const storePath = join(__dirname, "..", "test", "store");
-  const subject = () => configHandler(storePath, {
-    abc123: {
-      secretKey: "secret",
-      firmware: { type: "type", version: "version" },
-    },);
+  const subject = () =>
+    configHandler(storePath, {
+      abc123: {
+        secretKey: "secret",
+        firmware: { type: "type", version: "version" },
+      },
+    });
 
   describe("config does not exist", () => {
     let req: HMACRequest;

@@ -1,8 +1,9 @@
 import { firmwareHandler } from "./firmwareHandler";
 import { join } from "path";
 import { Response } from "express";
-import { HMACRequest } from "middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
 import path from "path";
+import { readFile } from "fs/promises";
 
 class MockError extends Error {
   public message: string;
@@ -34,6 +35,7 @@ describe("firmwareHandler", () => {
       contentType: jest.fn(),
       sendFile: jest.fn(),
       sendStatus: jest.fn(),
+      set: jest.fn(),
     } as unknown) as Response;
   });
 
@@ -81,6 +83,24 @@ describe("firmwareHandler", () => {
         expect(res.sendFile as jest.Mock).toBeCalledWith(
           path.join(storePath, "type/version/firmware.bin")
         );
+      });
+
+      it("signs the payload", async () => {
+        const handler = subject();
+        await handler(req, res);
+
+        expect(res.set as jest.Mock).toBeCalledTimes(3);
+
+        const created = (res.set as jest.Mock).mock.calls[0][1] as string;
+        const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
+
+        const data = await readFile(
+          path.join(storePath, "type/version/firmware.bin")
+        );
+        const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
+        const signature = sign(message, "secret");
+
+        expect(res.set as jest.Mock).toBeCalledWith("signature", signature);
       });
     });
 
