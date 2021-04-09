@@ -1,6 +1,5 @@
-import { Devices, hmacAuthorization, HMACRequest } from "./hmac";
+import { Devices, hmacAuthorization, HMACRequest, sign } from "./hmac";
 import { Response } from "express";
-import crypto from "crypto";
 
 describe("hmac middleware", () => {
   let req: HMACRequest;
@@ -125,10 +124,7 @@ describe("hmac middleware", () => {
     describe("Unknown device", () => {
       beforeEach(() => {
         const message = "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21";
-        const buffer = Buffer.from(message, "utf8");
-        const hash = crypto.createHmac("sha256", "secret");
-        hash.update(buffer);
-        const signature = hash.digest("base64");
+        const signature = sign(message, "secret");
 
         req = ({
           method: "get",
@@ -168,10 +164,7 @@ describe("hmac middleware", () => {
     describe("Invalid signature", () => {
       beforeEach(() => {
         const message = "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21";
-        const buffer = Buffer.from(message, "utf8");
-        const hash = crypto.createHmac("sha256", "wrongsecret");
-        hash.update(buffer);
-        const signature = hash.digest("base64");
+        const signature = sign(message, "notsecret");
 
         req = ({
           method: "get",
@@ -211,10 +204,7 @@ describe("hmac middleware", () => {
     describe("Valid signature", () => {
       beforeEach(() => {
         const message = "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21";
-        const buffer = Buffer.from(message, "utf8");
-        const hash = crypto.createHmac("sha256", "secret");
-        hash.update(buffer);
-        const signature = hash.digest("base64");
+        const signature = sign(message, "secret");
 
         req = ({
           method: "get",
@@ -248,5 +238,27 @@ describe("hmac middleware", () => {
         expect(nextFunction as jest.Mock).toHaveBeenCalledWith();
       });
     });
+  });
+});
+
+describe("sign", () => {
+  let message: string | Buffer;
+  let secret: string;
+
+  const subject = () => sign(message, secret);
+
+  it("signs strings", () => {
+    message = "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21";
+    secret = "secret";
+    expect(subject()).toEqual("SpzyqqImicOLKO9ZwhB+kk4/gM32+wd+I6h6Si6BW/s=");
+  });
+
+  it("signs Buffers", () => {
+    message = Buffer.from(
+      "get\npath\n2021-04-08T11:00:21\n2021-04-08T11:15:21",
+      "utf8"
+    );
+    secret = "secret";
+    expect(subject()).toEqual("SpzyqqImicOLKO9ZwhB+kk4/gM32+wd+I6h6Si6BW/s=");
   });
 });

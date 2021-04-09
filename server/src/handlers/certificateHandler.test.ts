@@ -1,8 +1,9 @@
 import { certificateHandler } from "./certificateHandler";
 import { join } from "path";
 import { Response } from "express";
-import { HMACRequest } from "../middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
 import path from "path";
+import { readFile } from "fs/promises";
 
 class MockError extends Error {
   public message: string;
@@ -66,11 +67,16 @@ describe("certificateHandler", () => {
         const handler = subject();
         await handler(req, res);
 
-        expect(res.set as jest.Mock).toBeCalledTimes(1);
-        expect(res.set as jest.Mock).toBeCalledWith(
-          "signature",
-          "WQd+dU8P2hEmzrsSVzzNxT3RwpnoLl2LNSebSBRH6KU="
-        );
+        expect(res.set as jest.Mock).toBeCalledTimes(3);
+
+        const created = (res.set as jest.Mock).mock.calls[0][1] as string;
+        const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
+
+        const data = await readFile(path.join(storePath, "abc123.cert.pem"));
+        const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
+        const signature = sign(message, "secret");
+
+        expect(res.set as jest.Mock).toBeCalledWith("signature", signature);
       });
     });
 

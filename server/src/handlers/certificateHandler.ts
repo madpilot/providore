@@ -14,7 +14,17 @@ export function certificateHandler(
       res.contentType("application/x-pem-file");
       res.sendFile(filePath);
 
-      const signature = sign(await readFile(filePath), device.secretKey);
+      const data = await readFile(filePath);
+      const created = new Date();
+      const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+      const message = `${data.toString(
+        "utf-8"
+      )}\n${created.toISOString()}\n${expires.toISOString()}`;
+      const signature = sign(message, device.secretKey);
+
+      res.set("created-at", created.toISOString());
+      res.set("expires", expires.toISOString());
       res.set("signature", signature);
     } catch (err) {
       if (err.code === "ENOENT") {
