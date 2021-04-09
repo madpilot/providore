@@ -1,4 +1,4 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, response, Response } from "express";
 import crypto from "crypto";
 
 export interface Device {
@@ -34,6 +34,24 @@ export function sign(message: string | Buffer, secret: string): string {
   const hash = crypto.createHmac("sha256", secret);
   hash.update(buffer);
   return hash.digest("base64");
+}
+
+export function signPayload(
+  res: Response,
+  payload: string | Buffer,
+  secret: string
+): void {
+  const created = new Date();
+  const expires = new Date(created.getTime() + 15 * 60 * 1000);
+
+  const message = `${payload.toString(
+    "utf-8"
+  )}\n${created.toISOString()}\n${expires.toISOString()}`;
+  const signature = sign(message, secret);
+
+  res.set("created-at", created.toISOString());
+  res.set("expires", expires.toISOString());
+  res.set("signature", signature);
 }
 
 export function hmacAuthorization(devices: Devices) {
