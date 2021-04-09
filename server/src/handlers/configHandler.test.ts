@@ -1,8 +1,9 @@
 import { configHandler } from "./configHandler";
 import { join } from "path";
 import { Response } from "express";
-import { HMACRequest } from "middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
 import path from "path";
+import { readFile } from "fs/promises";
 
 class MockError extends Error {
   public message: string;
@@ -17,7 +18,11 @@ class MockError extends Error {
 
 describe("configHandler", () => {
   const storePath = join(__dirname, "..", "test", "store");
-  const subject = () => configHandler(storePath);
+  const subject = () => configHandler(storePath, {
+    abc123: {
+      secretKey: "secret",
+      firmware: { type: "type", version: "version" },
+    },);
 
   describe("config does not exist", () => {
     let req: HMACRequest;
@@ -30,6 +35,7 @@ describe("configHandler", () => {
         contentType: jest.fn(),
         sendFile: jest.fn(),
         sendStatus: jest.fn(),
+        set: jest.fn(),
       } as unknown) as Response;
 
       device = "abc123";
@@ -51,6 +57,22 @@ describe("configHandler", () => {
         expect(res.sendFile as jest.Mock).toBeCalledWith(
           path.join(storePath, "abc123.json")
         );
+      });
+
+      it("signs the payload", async () => {
+        const handler = subject();
+        await handler(req, res);
+
+        expect(res.set as jest.Mock).toBeCalledTimes(3);
+
+        const created = (res.set as jest.Mock).mock.calls[0][1] as string;
+        const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
+
+        const data = await readFile(path.join(storePath, "abc123.json"));
+        const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
+        const signature = sign(message, "secret");
+
+        expect(res.set as jest.Mock).toBeCalledWith("signature", signature);
       });
     });
 
