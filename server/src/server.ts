@@ -5,10 +5,10 @@ import path from "path";
 
 import http from "http";
 import https from "https";
-import { configHandler } from "handlers/configHandler";
-import { certificateHandler } from "handlers/certificateHandler";
-import { firmwareHandler } from "handlers/firmwareHandler";
-import { csrHandler } from "handlers/csrHandler";
+import { configHandler } from "./handlers/configHandler";
+import { certificateHandler } from "./handlers/certificateHandler";
+import { firmwareHandler } from "./handlers/firmwareHandler";
+import { csrHandler } from "./handlers/csrHandler";
 
 const app = express();
 
@@ -41,16 +41,15 @@ export function startServer({
 }: ServerConfig) {
   app.use(hmacAuthorization(devices));
 
-  app.get("/config.json", configHandler(configStore));
+  app.get("/config.json", configHandler(configStore, devices));
   app.post("/certificates/request", csrHandler());
-  app.get("/client.cert.pem", certificateHandler(certificateStore));
+  app.get("/client.cert.pem", certificateHandler(certificateStore, devices));
   app.get("/firmware.bin", firmwareHandler(firmwareStore, devices));
 
   // TODO: Add either a OCSP or stream out a CRL file
   // CRL, while not the latest and greatest probably makes the most sense
   // here as the only server that needs to validate the certificate is
   // MQTT, so having a the over head of OCSP seems like overkill at the moment...
-
   if (protocol == "https") {
     const httpsServer = https.createServer(
       {

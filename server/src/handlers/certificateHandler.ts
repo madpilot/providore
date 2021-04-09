@@ -12,10 +12,9 @@ export function certificateHandler(
     try {
       const filePath = path.join(certificateStore, `${req.device}.cert.pem`);
       res.contentType("application/x-pem-file");
-      res.sendFile(filePath);
-
       const data = await readFile(filePath);
       signPayload(res, data, device.secretKey);
+      res.sendFile(filePath);
     } catch (err) {
       if (err.code === "ENOENT") {
         res.sendStatus(404);

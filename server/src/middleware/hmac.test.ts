@@ -123,9 +123,9 @@ describe("hmac middleware", () => {
   describe("Unparsable created-at header", () => {
     beforeEach(() => {
       const created = new Date(new Date().getTime() - 60 * 60 * 1000);
-      const expires = new Date(created.getTime() + 15 * 60 * 1000);
+      const expiry = new Date(created.getTime() + 15 * 60 * 1000);
 
-      const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+      const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
       const signature = sign(message, "secret");
 
       req = ({
@@ -138,7 +138,7 @@ describe("hmac middleware", () => {
             case "created-at":
               return "Hello!";
             case "expiry":
-              return expires.toISOString();
+              return expiry.toISOString();
             default:
               return undefined;
           }
@@ -170,9 +170,9 @@ describe("hmac middleware", () => {
   describe("Unparsable expiry header", () => {
     beforeEach(() => {
       const created = new Date(new Date().getTime() - 60 * 60 * 1000);
-      const expires = new Date(created.getTime() + 15 * 60 * 1000);
+      const expiry = new Date(created.getTime() + 15 * 60 * 1000);
 
-      const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+      const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
       const signature = sign(message, "secret");
 
       req = ({
@@ -217,9 +217,9 @@ describe("hmac middleware", () => {
   describe("Expired authorization header", () => {
     beforeEach(() => {
       const created = new Date(new Date().getTime() - 60 * 60 * 1000);
-      const expires = new Date(created.getTime() + 15 * 60 * 1000);
+      const expiry = new Date(created.getTime() + 15 * 60 * 1000);
 
-      const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+      const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
       const signature = sign(message, "secret");
 
       req = ({
@@ -232,7 +232,7 @@ describe("hmac middleware", () => {
             case "created-at":
               return created.toISOString();
             case "expiry":
-              return expires.toISOString();
+              return expiry.toISOString();
             default:
               return undefined;
           }
@@ -265,9 +265,9 @@ describe("hmac middleware", () => {
     describe("Unknown device", () => {
       beforeEach(() => {
         const created = new Date();
-        const expires = new Date(created.getTime() + 15 * 60 * 1000);
+        const expiry = new Date(created.getTime() + 15 * 60 * 1000);
 
-        const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+        const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
         const signature = sign(message, "secret");
 
         req = ({
@@ -280,7 +280,7 @@ describe("hmac middleware", () => {
               case "created-at":
                 return created.toISOString();
               case "expiry":
-                return expires.toISOString();
+                return expiry.toISOString();
               default:
                 return undefined;
             }
@@ -308,9 +308,9 @@ describe("hmac middleware", () => {
     describe("Invalid signature", () => {
       beforeEach(() => {
         const created = new Date();
-        const expires = new Date(created.getTime() + 15 * 60 * 1000);
+        const expiry = new Date(created.getTime() + 15 * 60 * 1000);
 
-        const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+        const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
         const signature = sign(message, "notsecret");
 
         req = ({
@@ -323,7 +323,7 @@ describe("hmac middleware", () => {
               case "created-at":
                 return created.toISOString();
               case "expiry":
-                return expires.toISOString();
+                return expiry.toISOString();
               default:
                 return undefined;
             }
@@ -351,9 +351,9 @@ describe("hmac middleware", () => {
     describe("Valid signature", () => {
       beforeEach(() => {
         const created = new Date();
-        const expires = new Date(created.getTime() + 15 * 60 * 1000);
+        const expiry = new Date(created.getTime() + 15 * 60 * 1000);
 
-        const message = `get\npath\n${created.toISOString()}\n${expires.toISOString()}`;
+        const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
         const signature = sign(message, "secret");
 
         req = ({
@@ -366,7 +366,7 @@ describe("hmac middleware", () => {
               case "created-at":
                 return created.toISOString();
               case "expiry":
-                return expires.toISOString();
+                return expiry.toISOString();
               default:
                 return undefined;
             }

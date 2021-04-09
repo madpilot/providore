@@ -4,8 +4,7 @@
   "description": "Simple IoT provisioning service",
   "main": "dist/index.js",
   "scripts": {
-    "serve": "node dist/index.js",
-    "build": "tsc --build tsconfig.json",
+    "serve": "ts-node src/index.ts",
     "test": "jest"
   },
   "repository": {

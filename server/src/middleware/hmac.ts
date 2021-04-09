@@ -51,7 +51,7 @@ export function signPayload(
   const signature = sign(message, secret);
 
   res.set("created-at", created.toISOString());
-  res.set("expires", expires.toISOString());
+  res.set("expiry", expires.toISOString());
   res.set("signature", signature);
 }
 

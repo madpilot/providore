@@ -22,11 +22,10 @@ export function firmwareHandler(
     );
 
     try {
-      res.contentType("application/octet-stream");
-      res.sendFile(filePath);
-
       const data = await readFile(filePath);
       signPayload(res, data, device.secretKey);
+      res.contentType("application/octet-stream");
+      res.sendFile(filePath);
     } catch (err) {
       if (err.code === "ENOENT") {
         res.sendStatus(404);
