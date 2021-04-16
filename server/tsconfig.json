@@ -4,6 +4,7 @@
     "module": "commonjs",    
     "esModuleInterop": true,
     "baseUrl": "./src",
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "./src"
   }
 }

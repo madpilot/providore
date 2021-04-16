@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import commander, { Command } from "commander";
 import { load } from "./config";
 import { startServer } from "./server";

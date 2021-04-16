@@ -2,8 +2,10 @@
   "name": "providore",
   "version": "0.0.1",
   "description": "Simple IoT provisioning service",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
+  "bin": "dist/src/index.js",
   "scripts": {
+    "build": "tsc",
     "serve": "ts-node src/index.ts",
     "test": "jest"
   },
