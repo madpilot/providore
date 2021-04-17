@@ -1,10 +1,10 @@
 import { Devices, hmacAuthorization, HMACRequest, sign } from "./hmac";
-import { Response } from "express";
+import { Response, NextFunction } from "express";
 
 describe("hmac middleware", () => {
   let req: HMACRequest;
   let res: Response;
-  let nextFunction;
+  let nextFunction: NextFunction;
 
   const devices: Devices = {
     abc123: {
