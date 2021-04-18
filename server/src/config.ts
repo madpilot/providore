@@ -18,7 +18,7 @@ export interface StoreConfig {
 export type Config = HTTPConfig & StoreConfig;
 
 export async function load(config: string | undefined): Promise<Config> {
-  const pathCascade = ["/etc/providor", `${process.env.HOME}/.providor`];
+  const pathCascade = ["/etc/providore", `${process.env.HOME}/.providore`];
   if (config) {
     pathCascade.unshift(config);
   }
