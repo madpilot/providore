@@ -26,87 +26,75 @@ describe("certificateHandler", () => {
       },
     });
 
-  describe("certificate does not exist", () => {
-    let req: HMACRequest;
-    let res: Response;
-    let device: string;
+  let req: HMACRequest;
+  let res: Response;
+  let device: string;
 
-    beforeEach(() => {
-      req = { device } as HMACRequest;
-      res = ({
-        contentType: jest.fn(),
-        sendFile: jest.fn(),
-        sendStatus: jest.fn(),
-        set: jest.fn(),
-      } as unknown) as Response;
+  beforeEach(() => {
+    device = "abc123";
+    req = { device } as HMACRequest;
+    res = ({
+      contentType: jest.fn(),
+      sendFile: jest.fn(),
+      sendStatus: jest.fn(),
+      set: jest.fn(),
+    } as unknown) as Response;
+  });
 
-      device = "abc123";
-    });
-
-    it("sets the content type to JSON", async () => {
+  describe("when the file is found", () => {
+    it("returns a 200", async () => {
       const handler = subject();
       await handler(req, res);
-      expect(res.contentType as jest.Mock).toBeCalledTimes(1);
-      expect(res.contentType as jest.Mock).toBeCalledWith(
-        "application/x-pem-file"
+
+      expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendFile as jest.Mock).toBeCalledWith(
+        path.join(storePath, "abc123.cert.pem")
       );
     });
 
-    describe("when the file is found", () => {
-      it("returns a 200", async () => {
-        const handler = subject();
-        await handler(req, res);
+    it("signs the payload", async () => {
+      const handler = subject();
+      await handler(req, res);
 
-        expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
-        expect(res.sendFile as jest.Mock).toBeCalledWith(
-          path.join(storePath, "abc123.cert.pem")
-        );
-      });
+      expect(res.set as jest.Mock).toBeCalledTimes(3);
 
-      it("signs the payload", async () => {
-        const handler = subject();
-        await handler(req, res);
+      const created = (res.set as jest.Mock).mock.calls[0][1] as string;
+      const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
 
-        expect(res.set as jest.Mock).toBeCalledTimes(3);
+      const data = await readFile(path.join(storePath, "abc123.cert.pem"));
+      const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
+      const signature = sign(message, "secret");
 
-        const created = (res.set as jest.Mock).mock.calls[0][1] as string;
-        const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
-
-        const data = await readFile(path.join(storePath, "abc123.cert.pem"));
-        const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
-        const signature = sign(message, "secret");
-
-        expect(res.set as jest.Mock).toBeCalledWith("signature", signature);
-      });
+      expect(res.set as jest.Mock).toBeCalledWith("signature", signature);
     });
+  });
 
-    describe("when the file is not found", () => {
-      it("returns a 404", async () => {
-        res.sendFile = jest.fn().mockImplementation(() => {
-          throw new MockError("", "ENOENT");
-        });
-
-        const handler = subject();
-        await handler(req, res);
-
-        expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
-        expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
-        expect(res.sendStatus as jest.Mock).toBeCalledWith(404);
+  describe("when the file is not found", () => {
+    it("returns a 404", async () => {
+      res.sendFile = jest.fn().mockImplementation(() => {
+        throw new MockError("", "ENOENT");
       });
+
+      const handler = subject();
+      await handler(req, res);
+
+      expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(404);
     });
+  });
 
-    describe("when there is an error reading the file", () => {
-      it("returns a 500", async () => {
-        res.sendFile = jest.fn().mockImplementation(() => {
-          throw new MockError("Other Error", "Other");
-        });
-
-        const handler = subject();
-        await handler(req, res);
-
-        expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
-        expect(res.sendStatus as jest.Mock).toBeCalledWith(500);
+  describe("when there is an error reading the file", () => {
+    it("returns a 500", async () => {
+      res.sendFile = jest.fn().mockImplementation(() => {
+        throw new MockError("Other Error", "Other");
       });
+
+      const handler = subject();
+      await handler(req, res);
+
+      expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(500);
     });
   });
 });

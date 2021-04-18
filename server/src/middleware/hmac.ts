@@ -1,4 +1,4 @@
-import { NextFunction, Request, response, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import crypto from "crypto";
 import { isPast, parseISO } from "date-fns";
 
@@ -23,7 +23,13 @@ function isAuthorizationObject(obj: any): obj is AuthorizationObject {
   );
 }
 
-export type HMACRequest = Request & { device: string };
+interface HMACParams {
+  authorization: string;
+  "created-at": string;
+  expiry: string;
+}
+
+export type HMACRequest = Request<HMACParams> & { device?: string };
 
 export function sign(message: string | Buffer, secret: string): string {
   let buffer: Buffer;
@@ -56,7 +62,7 @@ export function signPayload(
 }
 
 export function hmacAuthorization(devices: Devices) {
-  return (req: HMACRequest, res: Response, next: NextFunction) => {
+  return (req: HMACRequest, res: Response, next: NextFunction): void => {
     const authorizationHeader = req.get("authorization");
 
     if (!authorizationHeader) {
@@ -79,7 +85,7 @@ export function hmacAuthorization(devices: Devices) {
         return [key, values.join("=")];
       })
       .reduce<Record<string, string>>(
-        (t, [key, value]: [string, string]) => ({ ...t, [key]: value }),
+        (t, [key, value]) => ({ ...t, [key]: value }),
         {}
       );
 
@@ -89,13 +95,26 @@ export function hmacAuthorization(devices: Devices) {
       return next("router");
     }
 
-    const created = parseISO(req.get("created-at"));
+    const requestCreatedAt = req.get("created-at");
+    if (!requestCreatedAt) {
+      console.error("Missing created-at header");
+      res.sendStatus(401);
+      return next("router");
+    }
+    const created = parseISO(requestCreatedAt);
     if (created.toString() === "Invalid Date") {
       res.sendStatus(400);
       return next(new Error("Invalid created-at date"));
     }
 
-    const expiry = parseISO(req.get("expiry"));
+    const requestExpiry = req.get("expiry");
+    if (!requestExpiry) {
+      console.error("Missing expiry header");
+      res.sendStatus(401);
+      return next("router");
+    }
+
+    const expiry = parseISO(requestExpiry);
     if (expiry.toString() === "Invalid Date") {
       res.sendStatus(400);
       return next(new Error("Invalid expiry"));

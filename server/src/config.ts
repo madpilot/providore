@@ -10,7 +10,7 @@ export interface HTTPConfig {
 }
 
 export interface StoreConfig {
-  config?: string | undefined;
+  config: string;
   firmwareStore?: string | undefined;
   certificateStore?: string | undefined;
 }

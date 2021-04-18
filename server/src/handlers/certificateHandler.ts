@@ -8,6 +8,10 @@ export function certificateHandler(
   devices: Devices
 ): (req: HMACRequest, res: Response) => void {
   return async (req, res) => {
+    if (!req.device) {
+      res.sendStatus(404);
+      return;
+    }
     const device = devices[req.device];
     try {
       const filePath = path.join(certificateStore, `${req.device}.cert.pem`);

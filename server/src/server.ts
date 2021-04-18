@@ -36,17 +36,35 @@ export async function startServer({
 
     app.get("/config.json", configHandler(config, devices));
     app.post("/certificates/request", csrHandler());
-    app.get("/client.cert.pem", certificateHandler(certificateStore, devices));
-    app.get("/firmware.bin", firmwareHandler(firmwareStore, devices));
+    if (certificateStore) {
+      app.get(
+        "/client.cert.pem",
+        certificateHandler(certificateStore, devices)
+      );
+    }
+    if (firmwareStore) {
+      app.get("/firmware.bin", firmwareHandler(firmwareStore, devices));
+    }
 
     // TODO: Add either a OCSP or stream out a CRL file
     // CRL, while not the latest and greatest probably makes the most sense
     // here as the only server that needs to validate the certificate is
     // MQTT, so having a the over head of OCSP seems like overkill at the moment...
     if (protocol == "https") {
+      if (!sslCertPath) {
+        throw new Error(
+          "Unable to start SSL server - no certificate file supplied"
+        );
+      }
+      if (!sslKeyPath) {
+        throw new Error(
+          "Unable to start SSL server - no certificate key supplied"
+        );
+      }
+
       const cert = await readFile(sslCertPath);
       const key = await readFile(sslKeyPath);
-      const ca = await readFile(caCertPath);
+      const ca = caCertPath ? await readFile(caCertPath) : undefined;
       const httpsServer = https.createServer(
         {
           cert,

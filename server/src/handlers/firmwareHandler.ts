@@ -8,6 +8,10 @@ export function firmwareHandler(
   devices: Devices
 ): (req: HMACRequest, res: Response) => void {
   return async (req, res) => {
+    if (!req.device) {
+      res.sendStatus(404);
+      return;
+    }
     const device = devices[req.device];
     if (!device) {
       res.sendStatus(404);
