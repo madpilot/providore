@@ -8,6 +8,10 @@ export function configHandler(
   devices: Devices
 ): (req: HMACRequest, res: Response) => void {
   return async (req, res) => {
+    if (!req.device) {
+      res.sendStatus(404);
+      return;
+    }
     const device = devices[req.device];
     const filePath = path.join(configStore, `${req.device}.json`);
 

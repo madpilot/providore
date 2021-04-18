@@ -27,6 +27,10 @@ program.option(
 );
 
 async function bootstrap(options: commander.OptionValues) {
+  if (typeof options.config !== "string") {
+    throw new Error("Unable to find path to config file");
+  }
+
   const config = await load(options.config);
   const defaults = {
     protocol: "http",

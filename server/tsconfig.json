@@ -1,7 +1,6 @@
 {
-  "compilerOptions": {
-    "target": "es2017",
-    "module": "commonjs",    
+  "extends": "@tsconfig/node14/tsconfig.json",
+  "compilerOptions": {    
     "esModuleInterop": true,
     "baseUrl": "./src",
     "outDir": "./dist",
