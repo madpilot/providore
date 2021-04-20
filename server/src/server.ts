@@ -21,16 +21,20 @@ async function loadDevices(configStore: string): Promise<Devices> {
 }
 
 export async function startServer({
-  protocol,
-  bind,
-  port,
-  sslCertPath,
-  sslKeyPath,
-  caCertPath,
+  webserver,
   config,
   certificateStore,
   firmwareStore,
 }: Config) {
+  const {
+    protocol,
+    bind,
+    port,
+    sslCertPath,
+    sslKeyPath,
+    caCertPath,
+  } = webserver;
+
   try {
     const devices = await loadDevices(config);
     app.use(hmacAuthorization(devices));
@@ -75,12 +79,12 @@ export async function startServer({
         app
       );
       httpsServer.listen(port, () => {
-        logger.log(`HTTPS server listening at ${protocol}://${bind}:${port}`);
+        logger.info(`HTTPS server listening at ${protocol}://${bind}:${port}`);
       });
     } else {
       const httpServer = http.createServer(app);
       httpServer.listen(port, () => {
-        logger.log(`HTTP server listening at ${protocol}://${bind}:${port}`);
+        logger.info(`HTTP server listening at ${protocol}://${bind}:${port}`);
       });
     }
   } catch (e) {

@@ -3,6 +3,7 @@ import commander, { Command } from "commander";
 import { load } from "./config";
 import { startServer } from "./server";
 import { resolve } from "path";
+import { logger, reconfigureLogger } from "./logger";
 const program = new Command();
 program.version("0.0.1");
 
@@ -32,26 +33,29 @@ async function bootstrap(options: commander.OptionValues) {
   }
 
   const config = await load(options.config);
+  reconfigureLogger(logger, config.logging);
   const defaults = {
-    protocol: "http",
-    bind: "0.0.0.0",
-    port: 3000,
+    webserver: {
+      protocol: "http",
+      bind: "0.0.0.0",
+      port: 3000,
+    },
   };
 
   if (typeof options.ssl !== "undefined") {
-    config.protocol = options.ssl ? "https" : "http";
+    config.webserver.protocol = options.ssl ? "https" : "http";
   }
 
   if (typeof options.cert !== "undefined") {
-    config.sslCertPath = options.cert;
+    config.webserver.sslCertPath = options.cert;
   }
 
   if (typeof options.certKey !== "undefined") {
-    config.sslKeyPath = options.certKey;
+    config.webserver.sslKeyPath = options.certKey;
   }
 
   if (typeof options.certCa !== "undefined") {
-    config.caCertPath = options.certCa;
+    config.webserver.caCertPath = options.certCa;
   }
 
   if (typeof options.certificateStore !== "undefined") {
@@ -62,14 +66,23 @@ async function bootstrap(options: commander.OptionValues) {
     config.firmwareStore = options.firmwareStore;
   }
 
-  if (config.sslCertPath) {
-    config.sslCertPath = resolve(config.config, config.sslCertPath);
+  if (config.webserver.sslCertPath) {
+    config.webserver.sslCertPath = resolve(
+      config.config,
+      config.webserver.sslCertPath
+    );
   }
-  if (config.sslKeyPath) {
-    config.sslKeyPath = resolve(config.config, config.sslKeyPath);
+  if (config.webserver.sslKeyPath) {
+    config.webserver.sslKeyPath = resolve(
+      config.config,
+      config.webserver.sslKeyPath
+    );
   }
-  if (config.caCertPath) {
-    config.caCertPath = resolve(config.config, config.caCertPath);
+  if (config.webserver.caCertPath) {
+    config.webserver.caCertPath = resolve(
+      config.config,
+      config.webserver.caCertPath
+    );
   }
   if (config.certificateStore) {
     config.certificateStore = resolve(config.config, config.certificateStore);
@@ -81,6 +94,10 @@ async function bootstrap(options: commander.OptionValues) {
   startServer({
     ...defaults,
     ...config,
+    webserver: {
+      ...defaults.webserver,
+      ...config.webserver,
+    },
   });
 }
 

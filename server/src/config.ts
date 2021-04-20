@@ -26,7 +26,10 @@ export interface LoggerConfig {
   console?: ConsoleTransportOptions;
 }
 
-export type Config = HTTPConfig & StoreConfig & LoggerConfig;
+export interface Config extends StoreConfig {
+  webserver: HTTPConfig;
+  logging: LoggerConfig;
+}
 
 export async function load(config: string | undefined): Promise<Config> {
   const pathCascade = ["/etc/providore", `${process.env.HOME}/.providore`];
