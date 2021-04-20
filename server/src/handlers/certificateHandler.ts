@@ -2,6 +2,7 @@ import { Response } from "express";
 import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
 import path from "path";
 import { readFile } from "fs/promises";
+import { logger } from "../logger";
 
 export function certificateHandler(
   certificateStore: string,
@@ -23,7 +24,7 @@ export function certificateHandler(
       if (err.code === "ENOENT") {
         res.sendStatus(404);
       } else {
-        console.error(err.message);
+        logger.error(err.message);
         res.sendStatus(500);
       }
     }

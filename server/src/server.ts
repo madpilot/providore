@@ -9,6 +9,7 @@ import { certificateHandler } from "./handlers/certificateHandler";
 import { firmwareHandler } from "./handlers/firmwareHandler";
 import { csrHandler } from "./handlers/csrHandler";
 import { Config } from "config";
+import { logger } from "./logger";
 
 const app = express();
 
@@ -20,16 +21,20 @@ async function loadDevices(configStore: string): Promise<Devices> {
 }
 
 export async function startServer({
-  protocol,
-  bind,
-  port,
-  sslCertPath,
-  sslKeyPath,
-  caCertPath,
+  webserver,
   config,
   certificateStore,
   firmwareStore,
 }: Config) {
+  const {
+    protocol,
+    bind,
+    port,
+    sslCertPath,
+    sslKeyPath,
+    caCertPath,
+  } = webserver;
+
   try {
     const devices = await loadDevices(config);
     app.use(hmacAuthorization(devices));
@@ -74,15 +79,15 @@ export async function startServer({
         app
       );
       httpsServer.listen(port, () => {
-        console.log(`HTTPS server listening at ${protocol}://${bind}:${port}`);
+        logger.info(`HTTPS server listening at ${protocol}://${bind}:${port}`);
       });
     } else {
       const httpServer = http.createServer(app);
       httpServer.listen(port, () => {
-        console.log(`HTTP server listening at ${protocol}://${bind}:${port}`);
+        logger.info(`HTTP server listening at ${protocol}://${bind}:${port}`);
       });
     }
   } catch (e) {
-    console.error(e);
+    logger.error(e);
   }
 }

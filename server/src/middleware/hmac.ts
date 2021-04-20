@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import crypto from "crypto";
 import { isPast, parseISO } from "date-fns";
+import { logger } from "../logger";
 
 export interface Device {
   secretKey: string;
@@ -90,14 +91,14 @@ export function hmacAuthorization(devices: Devices) {
       );
 
     if (!isAuthorizationObject(authorization)) {
-      console.error("Invalid authorization header");
+      logger.error("Invalid authorization header");
       res.sendStatus(401);
       return next("router");
     }
 
     const requestCreatedAt = req.get("created-at");
     if (!requestCreatedAt) {
-      console.error("Missing created-at header");
+      logger.error("Missing created-at header");
       res.sendStatus(401);
       return next("router");
     }
@@ -109,7 +110,7 @@ export function hmacAuthorization(devices: Devices) {
 
     const requestExpiry = req.get("expiry");
     if (!requestExpiry) {
-      console.error("Missing expiry header");
+      logger.error("Missing expiry header");
       res.sendStatus(401);
       return next("router");
     }
@@ -127,7 +128,7 @@ export function hmacAuthorization(devices: Devices) {
 
     const device = devices[authorization["key-id"]];
     if (!device) {
-      console.error("Device not found");
+      logger.error("Device not found");
       res.sendStatus(401);
       return next("router");
     }
@@ -139,7 +140,7 @@ export function hmacAuthorization(devices: Devices) {
     const signature = sign(message, device.secretKey);
 
     if (signature !== authorization.signature) {
-      console.error("Invalid signature");
+      logger.error("Invalid signature");
       res.sendStatus(401);
       return next("router");
     }

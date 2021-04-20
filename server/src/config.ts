@@ -1,4 +1,9 @@
 import { readFile } from "fs/promises";
+import { SyslogTransportOptions } from "winston-syslog";
+import {
+  ConsoleTransportOptions,
+  FileTransportOptions,
+} from "winston/lib/winston/transports";
 
 export interface HTTPConfig {
   protocol: "http" | "https";
@@ -15,7 +20,16 @@ export interface StoreConfig {
   certificateStore?: string | undefined;
 }
 
-export type Config = HTTPConfig & StoreConfig;
+export interface LoggerConfig {
+  syslog?: SyslogTransportOptions;
+  file?: FileTransportOptions;
+  console?: ConsoleTransportOptions;
+}
+
+export interface Config extends StoreConfig {
+  webserver: HTTPConfig;
+  logging: LoggerConfig;
+}
 
 export async function load(config: string | undefined): Promise<Config> {
   const pathCascade = ["/etc/providore", `${process.env.HOME}/.providore`];

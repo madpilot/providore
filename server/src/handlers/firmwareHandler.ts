@@ -2,6 +2,7 @@ import { Response } from "express";
 import { Devices, HMACRequest, sign, signPayload } from "../middleware/hmac";
 import path from "path";
 import { readFile } from "fs/promises";
+import { logger } from "../logger";
 
 export function firmwareHandler(
   firmwareStore: string,
@@ -34,7 +35,7 @@ export function firmwareHandler(
       if (err.code === "ENOENT") {
         res.sendStatus(404);
       } else {
-        console.error(err.message);
+        logger.error(err.message);
         res.sendStatus(500);
       }
     }

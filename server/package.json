@@ -24,6 +24,7 @@
     "@types/commander": "^2.12.2",
     "@types/express": "^4.17.11",
     "@types/jest": "^26.0.22",
+    "@types/winston-syslog": "^2.0.3",
     "babel-jest": "^26.6.3",
     "jest": "^26.6.3",
     "ts-jest": "^26.5.5",
@@ -33,6 +34,8 @@
   "dependencies": {
     "commander": "^7.2.0",
     "date-fns": "^2.21.1",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "winston": "^3.3.3",
+    "winston-syslog": "^2.4.4"
   }
 }
