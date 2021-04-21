@@ -2,6 +2,7 @@ import { LoggerConfig } from "config";
 import { Logger, createLogger } from "winston";
 
 const winston = require("winston");
+// eslint-disable-next-line no-unused-expressions
 require("winston-syslog").Syslog;
 
 export function reconfigureLogger(
@@ -21,7 +22,7 @@ export function reconfigureLogger(
             winston.format.colorize(),
             winston.format.simple()
           ),
-          ...config.console,
+          ...config.console
         })
       );
     }
@@ -41,5 +42,5 @@ export function reconfigureLogger(
 }
 
 export const logger = createLogger({
-  transports: [new winston.transports.Console({ silent: true })],
+  transports: [new winston.transports.Console({ silent: true })]
 });

@@ -9,8 +9,8 @@ describe("hmac middleware", () => {
   const devices: Devices = {
     abc123: {
       secretKey: "secret",
-      firmware: { type: "type", version: "version" },
-    },
+      firmware: { type: "type", version: "version" }
+    }
   };
 
   const subject = () => {
@@ -22,14 +22,14 @@ describe("hmac middleware", () => {
     res = ({
       contentType: jest.fn(),
       sendFile: jest.fn(),
-      sendStatus: jest.fn(),
+      sendStatus: jest.fn()
     } as unknown) as Response;
   });
 
   describe("no authorization header", () => {
     beforeEach(() => {
       req = ({
-        get: jest.fn(() => undefined),
+        get: jest.fn(() => undefined)
       } as unknown) as HMACRequest;
     });
 
@@ -64,7 +64,7 @@ describe("hmac middleware", () => {
             default:
               return undefined;
           }
-        }),
+        })
       } as unknown) as HMACRequest;
     });
 
@@ -99,7 +99,7 @@ describe("hmac middleware", () => {
             default:
               return undefined;
           }
-        }),
+        })
       } as unknown) as HMACRequest;
     });
 
@@ -142,7 +142,7 @@ describe("hmac middleware", () => {
             default:
               return undefined;
           }
-        }),
+        })
       } as unknown) as HMACRequest;
     });
 
@@ -189,7 +189,7 @@ describe("hmac middleware", () => {
             default:
               return undefined;
           }
-        }),
+        })
       } as unknown) as HMACRequest;
     });
 
@@ -236,7 +236,7 @@ describe("hmac middleware", () => {
             default:
               return undefined;
           }
-        }),
+        })
       } as unknown) as HMACRequest;
     });
 
@@ -284,7 +284,7 @@ describe("hmac middleware", () => {
               default:
                 return undefined;
             }
-          }),
+          })
         } as unknown) as HMACRequest;
       });
 
@@ -327,7 +327,7 @@ describe("hmac middleware", () => {
               default:
                 return undefined;
             }
-          }),
+          })
         } as unknown) as HMACRequest;
       });
 
@@ -370,7 +370,7 @@ describe("hmac middleware", () => {
               default:
                 return undefined;
             }
-          }),
+          })
         } as unknown) as HMACRequest;
       });
 

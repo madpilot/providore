@@ -15,7 +15,7 @@ const app = express();
 
 async function loadDevices(configStore: string): Promise<Devices> {
   const data = await readFile(`${configStore}/devices.json`, {
-    encoding: "utf-8",
+    encoding: "utf-8"
   });
   return JSON.parse(data);
 }
@@ -24,7 +24,7 @@ export async function startServer({
   webserver,
   configStore,
   certificateStore,
-  firmwareStore,
+  firmwareStore
 }: Config) {
   const {
     protocol,
@@ -32,7 +32,7 @@ export async function startServer({
     port,
     sslCertPath,
     sslKeyPath,
-    caCertPath,
+    caCertPath
   } = webserver;
 
   try {
@@ -74,7 +74,7 @@ export async function startServer({
         {
           cert,
           key,
-          ca,
+          ca
         },
         app
       );

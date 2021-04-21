@@ -1,8 +1,8 @@
 import { firmwareHandler } from "./firmwareHandler";
-import { join } from "path";
+import path, { join } from "path";
 import { Response } from "express";
 import { HMACRequest, sign } from "../middleware/hmac";
-import path from "path";
+
 import { readFile } from "fs/promises";
 
 class MockError extends Error {
@@ -22,8 +22,8 @@ describe("firmwareHandler", () => {
     firmwareHandler(storePath, {
       abc123: {
         secretKey: "secret",
-        firmware: { type: "type", version: "version" },
-      },
+        firmware: { type: "type", version: "version" }
+      }
     });
 
   let req: HMACRequest;
@@ -35,7 +35,7 @@ describe("firmwareHandler", () => {
       contentType: jest.fn(),
       sendFile: jest.fn(),
       sendStatus: jest.fn(),
-      set: jest.fn(),
+      set: jest.fn()
     } as unknown) as Response;
   });
 

@@ -40,8 +40,8 @@ async function bootstrap(options: commander.OptionValues) {
     webserver: {
       protocol: "http",
       bind: "0.0.0.0",
-      port: 3000,
-    },
+      port: 3000
+    }
   };
 
   if (typeof options.ssl !== "undefined") {
@@ -102,8 +102,8 @@ async function bootstrap(options: commander.OptionValues) {
     ...config,
     webserver: {
       ...defaults.webserver,
-      ...config.webserver,
-    },
+      ...config.webserver
+    }
   });
 }
 

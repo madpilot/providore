@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Devices, HMACRequest, sign, signPayload } from "../middleware/hmac";
+import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
 import path from "path";
 import { readFile } from "fs/promises";
 import { logger } from "../logger";

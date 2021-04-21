@@ -1,6 +1,5 @@
 import { Response } from "express";
 import { HMACRequest } from "middleware/hmac";
-import path from "path";
 
 export function csrHandler(): (req: HMACRequest, res: Response) => void {
   return async (_req, res) => {

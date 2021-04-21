@@ -2,7 +2,7 @@ import { readFile } from "fs/promises";
 import { SyslogTransportOptions } from "winston-syslog";
 import {
   ConsoleTransportOptions,
-  FileTransportOptions,
+  FileTransportOptions
 } from "winston/lib/winston/transports";
 
 export interface HTTPConfig {
@@ -42,7 +42,7 @@ export async function load(config: string | undefined): Promise<Config> {
     try {
       const path = pathCascade.shift();
       const data = await readFile(`${path}/config.json`, {
-        encoding: "utf-8",
+        encoding: "utf-8"
       });
       return { ...JSON.parse(data), config: path };
     } catch (e) {
