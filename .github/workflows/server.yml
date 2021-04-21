@@ -10,7 +10,12 @@ env:
   DEBUG: "true"
 
 jobs:
-  build:
+  test:
+    defaults:
+      run:
+        shell: bash
+        working-directory: server
+        
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
