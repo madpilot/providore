@@ -15,7 +15,8 @@ export interface HTTPConfig {
 }
 
 export interface StoreConfig {
-  config: string;
+  configStore: string;
+  deviceStore: string | undefined;
   firmwareStore?: string | undefined;
   certificateStore?: string | undefined;
 }
@@ -27,6 +28,7 @@ export interface LoggerConfig {
 }
 
 export interface Config extends StoreConfig {
+  config: string;
   webserver: HTTPConfig;
   logging: LoggerConfig;
 }

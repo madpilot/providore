@@ -2,5 +2,6 @@
 /node_modules
 /devices/*
 !/devices/.keep
+/config/*
 /devices/config/*
 !/devices/config/.keep

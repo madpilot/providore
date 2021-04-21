@@ -22,7 +22,7 @@ async function loadDevices(configStore: string): Promise<Devices> {
 
 export async function startServer({
   webserver,
-  config,
+  configStore,
   certificateStore,
   firmwareStore,
 }: Config) {
@@ -36,10 +36,10 @@ export async function startServer({
   } = webserver;
 
   try {
-    const devices = await loadDevices(config);
+    const devices = await loadDevices(configStore);
     app.use(hmacAuthorization(devices));
 
-    app.get("/config.json", configHandler(config, devices));
+    app.get("/config.json", configHandler(configStore, devices));
     app.post("/certificates/request", csrHandler());
     if (certificateStore) {
       app.get(
@@ -55,7 +55,7 @@ export async function startServer({
     // CRL, while not the latest and greatest probably makes the most sense
     // here as the only server that needs to validate the certificate is
     // MQTT, so having a the over head of OCSP seems like overkill at the moment...
-    if (protocol == "https") {
+    if (protocol === "https") {
       if (!sslCertPath) {
         throw new Error(
           "Unable to start SSL server - no certificate file supplied"
