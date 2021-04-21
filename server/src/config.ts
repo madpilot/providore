@@ -43,7 +43,11 @@ export async function load(config: string | undefined): Promise<Config> {
         encoding: "utf-8",
       });
       return { ...JSON.parse(data), config: path };
-    } catch (e) {}
+    } catch (e) {
+      if (e.code !== "ENOENT") {
+        throw new Error(`Unable to load the configuration file: ${e.message}`);
+      }
+    }
   }
   throw new Error("Configuration folder not found");
 }

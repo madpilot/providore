@@ -102,4 +102,11 @@ async function bootstrap(options: commander.OptionValues) {
 }
 
 program.parse(process.argv);
-bootstrap(program.opts());
+
+bootstrap(program.opts()).catch((e) => {
+  if (process.env.DEBUG) {
+    console.error(e);
+  } else {
+    console.error(e.message);
+  }
+});
