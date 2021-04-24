@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import crypto from "crypto";
 import { isPast, parseISO } from "date-fns";
 import { logger } from "../logger";
+import * as core from "express-serve-static-core";
 
 export interface Device {
   secretKey: string;
@@ -23,14 +24,15 @@ function isAuthorizationObject(obj: any): obj is AuthorizationObject {
     typeof obj["key-id"] !== "undefined" && typeof obj.signature !== "undefined"
   );
 }
-
-interface HMACParams {
-  authorization: string;
-  "created-at": string;
-  expiry: string;
+export interface HMACRequest<
+  P = core.ParamsDictionary,
+  ResBody = any,
+  ReqBody = any,
+  ReqQuery = core.Query,
+  Locals extends Record<string, any> = Record<string, any>
+> extends Request<P, ResBody, ReqBody, ReqQuery, Locals> {
+  device?: string;
 }
-
-export type HMACRequest = Request<HMACParams> & { device?: string };
 
 export function sign(message: string | Buffer, secret: string): string {
   let buffer: Buffer;

@@ -1,9 +1,33 @@
 import { Response } from "express";
-import { HMACRequest } from "middleware/hmac";
+import { Devices, HMACRequest } from "middleware/hmac";
 
-export function csrHandler(): (req: HMACRequest, res: Response) => void {
-  return async (_req, res) => {
-    res.send("CSR required");
+interface Params {
+  csr?: string;
+}
+
+export function csrHandler(
+  certificateStore: string,
+  devices: Devices
+): (req: HMACRequest<Params>, res: Response) => void {
+  return async (req, res) => {
+    if (!req.device) {
+      res.sendStatus(404);
+      return;
+    }
+    const device = devices[req.device];
+    if (!device) {
+      res.sendStatus(404);
+      return;
+    }
+
+    const csr = req.params.csr;
+    if (!csr) {
+      res.sendStatus(404);
+      return
+    }
+
+    const result = await openssl(["ca", "-config", "path/to/openssl.cnf", "-batch", "-passin", "pass:<password>", "-extensions", "usr_cert", "-notext", "-md", "sha256", "-in", Buffer.from(csr), "-out", "path/to/certificate")
+
     // See: https://jamielinux.com/docs/openssl-certificate-authority/index.html
     // Write out the CSR, then
     // 1. If revoking, revoke the cert (This could be an configuration option?)
