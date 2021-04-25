@@ -1,4 +1,5 @@
 import { Response } from "express";
+import { sign } from "lib/openssl";
 import { Devices, HMACRequest } from "middleware/hmac";
 
 interface Params {
@@ -23,10 +24,10 @@ export function csrHandler(
     const csr = req.params.csr;
     if (!csr) {
       res.sendStatus(404);
-      return
+      return;
     }
 
-    const result = await openssl(["ca", "-config", "path/to/openssl.cnf", "-batch", "-passin", "pass:<password>", "-extensions", "usr_cert", "-notext", "-md", "sha256", "-in", Buffer.from(csr), "-out", "path/to/certificate")
+    const certification = await sign(csr);
 
     // See: https://jamielinux.com/docs/openssl-certificate-authority/index.html
     // Write out the CSR, then

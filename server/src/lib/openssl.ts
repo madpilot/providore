@@ -1,75 +1,82 @@
-// Inspirexd (heavily) by https://github.com/codevibess/openssl-nodejs/
 import { spawn } from "child_process";
-import fs from "fs";
-import { writeFile } from "fs/promises";
+import { file, FileResult } from "tmp-promise";
+import { createWriteStream, PathLike } from "fs";
+import { logger } from "../logger";
 
-function checkIsParamsString(obj: any): obj is string {
+function isString(obj: any): obj is string {
   return typeof obj === "string";
 }
 
-function checkBufferObject(obj: any): obj is Buffer {
-  return obj instanceof Object && obj.name && Buffer.isBuffer(obj.buffer);
+function splitParameters(
+  parameters: string | Array<string | Buffer>
+): Array<string | Buffer> {
+  if (isString(parameters)) {
+    return parameters.split(" ");
+  }
+  return parameters;
 }
 
-function checkCommandForIO(element: string): boolean {
-  return (
-    element.includes("-in") ||
-    element.includes("-out") ||
-    element.includes("-keyout") ||
-    element.includes("-signkey") ||
-    element.includes("-key")
-  );
+interface TemporaryFile {
+  file: FileResult;
+  content: Buffer;
 }
 
-function checkDataTypeCompatibility(params: any): params is string | object {
-  const allowedParamsDataTypes = ["string", "object"];
-  return allowedParamsDataTypes.includes(typeof params);
+async function resolveParameters(
+  param: string | Buffer
+): Promise<string | TemporaryFile> {
+  if (isString(param)) {
+    return Promise.resolve(param);
+  } else {
+    const p = await file();
+    return {
+      file: p,
+      content: param
+    };
+  }
 }
 
 export async function openssl(
   params: string | Array<string | Buffer>
-): Promise<[Array<string>, Array<string>]> {
+): Promise<string> {
   const stdout: Array<string> = [];
   const stderr: Array<string> = [];
-  const dir = "openssl/";
-  let parameters = params;
-  if (!checkDataTypeCompatibility(parameters)) {
-    throw new Error(
-      `Parameters must be string or an array, but got ${typeof parameters}`
-    );
-  }
 
-  if (checkIsParamsString(parameters)) {
-    parameters = parameters.split(" ");
-  }
+  // const tmpFiles: Array<FileResult> = [];
 
-  if (parameters.length === 0) {
-    throw new Error("Array of params must contain at least one parameter");
-  }
+  const resolved = await Promise.all(
+    splitParameters(params).map(resolveParameters)
+  );
 
-  if (parameters[0] === "openssl") {
-    parameters.shift();
-  }
+  // Write out all the tmp files
+  await Promise.all(
+    resolved
+      .filter((v) => !isString(v))
+      .map(async (v) => {
+        if (!isString(v)) {
+          const stream = createWriteStream(
+            (null as unknown) as PathLike, // Null is valid when there is a file descriptor
+            { fd: v.file.fd }
+          );
 
-  for (let i = 0; i <= parameters.length - 1; i++) {
-    const parameter = parameters[i];
-    if (checkBufferObject(parameter)) {
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
+          await new Promise<void>((resolve, reject) => {
+            stream.write(v.content, (err) => {
+              if (err) {
+                reject(err);
+              } else {
+                resolve();
+              }
+            });
+          });
 
-      const filename = dir + parameter.name;
-      await writeFile(filename, parameter.buffer);
-      parameters[i] = parameter.name;
-      parameters[i] = dir + parameter;
-    }
+          stream.close();
+        }
+      })
+  );
 
-    if (checkCommandForIO(parameter) && typeof parameters[i + 1] !== "object") {
-      parameters[i + 1] = dir + parameters[i + 1];
-    }
-  }
-
-  const openSSLProcess = spawn("openssl", parameters);
+  const openSSLProcess = spawn(
+    "openssl",
+    resolved.map((v) => (isString(v) ? v : v.file.path))
+  );
 
   openSSLProcess.stdout.on("data", (data) => {
     stdout.push(data);
@@ -79,12 +86,42 @@ export async function openssl(
     stderr.push(data);
   });
 
+  // eslint-disable-next-line unused-imports/no-unused-vars
   return new Promise((resolve, reject) => {
     openSSLProcess.on("close", (code) => {
-      console.log(`OpenSSL process ends with code ${code}`);
-      resolve([stdout, stderr]);
+      logger.info(`OpenSSL process ends with code ${code}`);
+
+      logger.info("Cleaning up temp files");
+      resolved.map((v) => (isString(v) ? v : v.file.cleanup()));
+      if (stderr.length > 0) {
+        reject(stderr.toString());
+      } else {
+        resolve(stdout.toString());
+      }
     });
   });
+}
 
-  return openSSLProcess;
+export async function sign(csr: string): Promise<string> {
+  const stdio = await openssl([
+    "ca",
+    "-config",
+    "<path/to/openssl.cnf>",
+    "-batch",
+    "-passin",
+    "pass:<password>",
+    "-extensions",
+    "usr_cert",
+    "-notext",
+    "-md",
+    "sha256",
+    "-in",
+    Buffer.from(csr),
+    "-out",
+    "path/to/cert"
+  ]);
+
+  logger.info(stdio.toString());
+
+  return "cert";
 }
