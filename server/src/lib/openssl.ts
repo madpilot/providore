@@ -6,6 +6,20 @@ import { OpenSSLConfig } from "config";
 import { readFile } from "fs/promises";
 import { dirname } from "path";
 
+type CertificateStatus = "valid" | "revoked" | "expired";
+interface CertificateRecord {
+  status: CertificateStatus;
+  expiration: Date;
+  revokation: Date;
+  serial: string;
+  subject: string;
+}
+
+interface TemporaryFile {
+  file: FileResult;
+  content: Buffer;
+}
+
 function isString(obj: any): obj is string {
   return typeof obj === "string";
 }
@@ -17,11 +31,6 @@ function splitParameters(
     return parameters.split(" ");
   }
   return parameters;
-}
-
-interface TemporaryFile {
-  file: FileResult;
-  content: Buffer;
 }
 
 async function resolveParameters(
@@ -75,10 +84,9 @@ export async function openssl(
       })
   );
 
-  const openSSLProcess = spawn(
-    bin,
-    resolved.map((v) => (isString(v) ? v : v.file.path))
-  );
+  const args = resolved.map((v) => (isString(v) ? v : v.file.path));
+  logger.debug(`Spawning '${bin} ${args.join(" ")}'`);
+  const openSSLProcess = spawn(bin, args);
 
   openSSLProcess.stdout.on("data", (data) => {
     stdout.push(data);
@@ -91,9 +99,17 @@ export async function openssl(
   // eslint-disable-next-line unused-imports/no-unused-vars
   return new Promise((resolve, reject) => {
     openSSLProcess.on("close", (code) => {
-      logger.info(`OpenSSL process ends with code ${code}`);
-      logger.info("Cleaning up temp files");
-      resolved.map((v) => (isString(v) ? v : v.file.cleanup()));
+      const files = resolved.filter((v) => !isString(v));
+
+      logger.debug(`Process returned ${code}`);
+      if (files.length > 0) {
+        logger.debug(
+          `Removing temp files: ${files
+            .map((v) => !isString(v) && v.file.path)
+            .join(" | ")}`
+        );
+      }
+      resolved.forEach((v) => !isString(v) && v.file.cleanup());
 
       if (code !== 0) {
         if (stderr.length > 0) {
@@ -110,6 +126,117 @@ export async function openssl(
   });
 }
 
+function certificateStatus(status: string): CertificateStatus {
+  if (status === "V") {
+    return "valid";
+  }
+  if (status === "E") {
+    return "expired";
+  }
+  return "revoked";
+}
+
+function parseDatabaseFile(
+  certificates: Array<CertificateRecord>,
+  line: string
+): Array<CertificateRecord> {
+  const [
+    status,
+    expiration,
+    revokation,
+    serial,
+    _filename,
+    subject
+  ] = line.split(/\t/);
+
+  if (status) {
+    const certificate: CertificateRecord = {
+      status: certificateStatus(status),
+      expiration: new Date(Date.parse(expiration)),
+      revokation: new Date(Date.parse(revokation)),
+      serial,
+      subject
+    };
+    return [...certificates, certificate];
+  }
+
+  return certificates;
+}
+
+function parseCnFromSubject(subject: string): string | undefined {
+  const str = subject.split("/").find((part) => part.indexOf("CN=") === 0);
+  if (str) {
+    const [_, cn] = str.split("=");
+    return cn;
+  }
+  return undefined;
+}
+
+function filterOnCn(cn: string): (certificate: CertificateRecord) => boolean {
+  return (certificate) => parseCnFromSubject(certificate.subject) === cn;
+}
+
+async function getCertificatesFromDatabase(
+  cn: string,
+  config: OpenSSLConfig
+): Promise<Array<CertificateRecord>> {
+  if (!config.configFile) {
+    throw new Error("No Open SSL config file set");
+  }
+  if (!config.passwordFile) {
+    throw new Error("No Open SSL password file set");
+  }
+
+  // Update the DB first
+  await updateDB(config);
+  const configDir = dirname(config.configFile);
+  const file = await readFile(`${configDir}/index.txt`);
+
+  return file
+    .toString("utf-8")
+    .split("\n")
+    .reduce(parseDatabaseFile, [])
+    .filter(filterOnCn(cn));
+}
+
+export async function getCSRSubject(
+  csr: string,
+  { bin }: OpenSSLConfig
+): Promise<string> {
+  return openssl(["req", "-noout", "-subject", "-in", Buffer.from(csr)], bin);
+}
+
+export async function updateDB({
+  bin,
+  passwordFile,
+  configFile
+}: OpenSSLConfig): Promise<void> {
+  if (!configFile) {
+    throw new Error("No Open SSL config file set");
+  }
+  if (!passwordFile) {
+    throw new Error("No Open SSL password file set");
+  }
+
+  logger.info("Updating the certificate database");
+
+  const stdio = await openssl(
+    [
+      "ca",
+      "-config",
+      `${configFile}`,
+      "-passin",
+      `file:${passwordFile}`,
+      "-updatedb"
+    ],
+    bin
+  );
+
+  if (stdio.length > 0) {
+    logger.info(stdio);
+  }
+}
+
 export async function sign(
   csr: string,
   device: string,
@@ -123,7 +250,16 @@ export async function sign(
     throw new Error("No Open SSL password file set");
   }
 
-  const certificates = await getCertificates(device, {
+  const subject = await getCSRSubject(csr, { bin });
+  logger.debug(`Subject: ${subject}`);
+  const cn = parseCnFromSubject(subject);
+  if (!cn) {
+    throw new Error("CN not found in the CSR");
+  }
+  logger.debug(`Checking certificate database for CN=${cn}`);
+  // Rather than device we should pull the actual CN as we can't really trust devices
+  // to do the right thing
+  const certificates = await getCertificatesFromDatabase(cn, {
     bin,
     passwordFile,
     configFile
@@ -158,75 +294,12 @@ export async function sign(
     bin
   );
 
-  logger.info(stdio.toString());
+  if (stdio.length > 0) {
+    logger.info(stdio);
+  }
 
   const certificate = await readFile(`${certificateStore}/${device}.cert.pem`);
   return certificate.toString("utf-8");
-}
-
-interface CertificateDatabase {
-  status: "valid" | "revoked" | "expired";
-  expiration: Date;
-  revokation: Date;
-  serial: string;
-  subject: string;
-}
-
-export async function getCertificates(
-  cn: string,
-  { bin, passwordFile, configFile }: OpenSSLConfig
-): Promise<Array<CertificateDatabase>> {
-  if (!configFile) {
-    throw new Error("No Open SSL config file set");
-  }
-
-  // Update the DB first
-  await openssl(
-    [
-      "ca",
-      "-config",
-      `${configFile}`,
-      "-passin",
-      `file:${passwordFile}`,
-      "-updatedb"
-    ],
-    bin
-  );
-  const configDir = dirname(configFile);
-  const file = await readFile(`${configDir}/index.txt`);
-
-  return file
-    .toString("utf-8")
-    .split("\n")
-    .reduce<Array<CertificateDatabase>>((certificates, line) => {
-      const [
-        status,
-        expiration,
-        revokation,
-        serial,
-        _filename,
-        subject
-      ] = line.split(/\t/);
-
-      if (status) {
-        const certificate: CertificateDatabase = {
-          status:
-            status === "V" ? "valid" : status === "R" ? "revoked" : "expired",
-          expiration: new Date(Date.parse(expiration)),
-          revokation: new Date(Date.parse(revokation)),
-          serial,
-          subject
-        };
-        return [...certificates, certificate];
-      }
-
-      return certificates;
-    }, [])
-    .filter((certificate) =>
-      certificate.subject
-        .split("/")
-        .find((component) => component === `CN=${cn}`)
-    );
 }
 
 export async function revoke(
@@ -236,7 +309,12 @@ export async function revoke(
   if (!configFile) {
     throw new Error("No Open SSL config file set");
   }
+  if (!passwordFile) {
+    throw new Error("No Open SSL password file set");
+  }
+
   const configDir = dirname(configFile);
+  logger.info(`Revoking ${configDir}/newcerts/${serial}.pem`);
 
   const stdio = await openssl(
     [
@@ -251,5 +329,42 @@ export async function revoke(
     bin
   );
 
-  logger.info(stdio.toString());
+  if (stdio.length > 0) {
+    logger.info(stdio);
+  }
+
+  await generateCRL({ bin, passwordFile, configFile });
+}
+
+export async function generateCRL({
+  bin,
+  passwordFile,
+  configFile
+}: OpenSSLConfig): Promise<void> {
+  if (!configFile) {
+    throw new Error("No Open SSL config file set");
+  }
+  if (!passwordFile) {
+    throw new Error("No Open SSL password file set");
+  }
+  const configDir = dirname(configFile);
+  logger.info("Generating a new CRL");
+
+  const stdio = await openssl(
+    [
+      "ca",
+      "-config",
+      `${configFile}`,
+      "-passin",
+      `file:${passwordFile}`,
+      "-gencrl",
+      "-out",
+      `${configDir}/crl.pem`
+    ],
+    bin
+  );
+
+  if (stdio.length > 0) {
+    logger.info(stdio);
+  }
 }
