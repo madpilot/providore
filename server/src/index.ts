@@ -97,12 +97,31 @@ async function bootstrap(options: commander.OptionValues) {
     config.firmwareStore = resolve(config.config, config.firmwareStore);
   }
 
+  if (config.openSSL.bin) {
+    config.openSSL.bin = resolve(config.config, config.openSSL.bin);
+  }
+  if (config.openSSL.configFile) {
+    config.openSSL.configFile = resolve(
+      config.config,
+      config.openSSL.configFile
+    );
+  }
+  if (config.openSSL.passwordFile) {
+    config.openSSL.passwordFile = resolve(
+      config.config,
+      config.openSSL.passwordFile
+    );
+  }
+
   startServer({
     ...defaults,
     ...config,
     webserver: {
       ...defaults.webserver,
       ...config.webserver
+    },
+    openSSL: {
+      ...config.openSSL
     }
   });
 }

@@ -10,9 +10,9 @@ import { firmwareHandler } from "./handlers/firmwareHandler";
 import { csrHandler } from "./handlers/csrHandler";
 import { Config } from "config";
 import { logger } from "./logger";
+import { text } from "body-parser";
 
 const app = express();
-
 async function loadDevices(configStore: string): Promise<Devices> {
   const data = await readFile(`${configStore}/devices.json`, {
     encoding: "utf-8"
@@ -24,7 +24,8 @@ export async function startServer({
   webserver,
   configStore,
   certificateStore,
-  firmwareStore
+  firmwareStore,
+  openSSL
 }: Config) {
   const {
     protocol,
@@ -38,10 +39,14 @@ export async function startServer({
   try {
     const devices = await loadDevices(configStore);
     app.use(hmacAuthorization(devices));
+    app.use(text({ defaultCharset: "utf-8" }));
 
     app.get("/config.json", configHandler(configStore, devices));
-    app.post("/certificates/request", csrHandler());
     if (certificateStore) {
+      app.post(
+        "/certificates/request",
+        csrHandler(certificateStore, devices, openSSL)
+      );
       app.get(
         "/client.cert.pem",
         certificateHandler(certificateStore, devices)

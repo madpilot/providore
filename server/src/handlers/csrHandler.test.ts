@@ -19,7 +19,7 @@ describe("csrHandler", () => {
   });
 
   it("does a thing", async () => {
-    const result = await sign("Hello!");
+    const result = await sign("Hello!", device, "", {});
     console.log(result);
   });
 });
