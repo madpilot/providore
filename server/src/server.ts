@@ -8,6 +8,7 @@ import { configHandler } from "./handlers/configHandler";
 import { certificateHandler } from "./handlers/certificateHandler";
 import { firmwareHandler } from "./handlers/firmwareHandler";
 import { csrHandler } from "./handlers/csrHandler";
+import { crlHandler } from "./handlers/crlHandler";
 import { Config } from "config";
 import { logger } from "./logger";
 import { text } from "body-parser";
@@ -38,8 +39,14 @@ export async function startServer({
 
   try {
     const devices = await loadDevices(configStore);
-    app.use(hmacAuthorization(devices));
+
     app.use(text({ defaultCharset: "utf-8" }));
+
+    if (openSSL.configFile) {
+      app.get("/certificates/crl", crlHandler(openSSL));
+    }
+
+    app.use(hmacAuthorization(devices));
 
     app.get("/config.json", configHandler(configStore, devices));
     if (certificateStore) {
@@ -56,10 +63,6 @@ export async function startServer({
       app.get("/firmware.bin", firmwareHandler(firmwareStore, devices));
     }
 
-    // TODO: Add either a OCSP or stream out a CRL file
-    // CRL, while not the latest and greatest probably makes the most sense
-    // here as the only server that needs to validate the certificate is
-    // MQTT, so having a the over head of OCSP seems like overkill at the moment...
     if (protocol === "https") {
       if (!sslCertPath) {
         throw new Error(
