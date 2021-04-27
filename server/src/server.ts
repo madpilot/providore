@@ -43,7 +43,7 @@ export async function startServer({
     app.use(text({ defaultCharset: "utf-8" }));
 
     if (openSSL.configFile) {
-      app.get("/certificates/crl", crlHandler(openSSL));
+      app.get("/certificates/crl.pem", crlHandler(openSSL));
     }
 
     app.use(hmacAuthorization(devices));
