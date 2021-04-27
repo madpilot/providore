@@ -4,6 +4,7 @@ import { createWriteStream, PathLike } from "fs";
 import { logger } from "../logger";
 import { OpenSSLConfig } from "config";
 import { readFile } from "fs/promises";
+import { dirname } from "path";
 
 function isString(obj: any): obj is string {
   return typeof obj === "string";
@@ -115,6 +116,27 @@ export async function sign(
   certificateStore: string,
   { bin, passwordFile, configFile }: OpenSSLConfig
 ): Promise<string> {
+  if (!configFile) {
+    throw new Error("No Open SSL config file set");
+  }
+  if (!passwordFile) {
+    throw new Error("No Open SSL password file set");
+  }
+
+  const certificates = await getCertificates(device, {
+    bin,
+    passwordFile,
+    configFile
+  });
+
+  await Promise.all(
+    certificates
+      .filter((certificate) => certificate.status === "valid")
+      .map((certificate) =>
+        revoke(certificate.serial, { bin, passwordFile, configFile })
+      )
+  );
+
   const stdio = await openssl(
     [
       "ca",
@@ -140,4 +162,94 @@ export async function sign(
 
   const certificate = await readFile(`${certificateStore}/${device}.cert.pem`);
   return certificate.toString("utf-8");
+}
+
+interface CertificateDatabase {
+  status: "valid" | "revoked" | "expired";
+  expiration: Date;
+  revokation: Date;
+  serial: string;
+  subject: string;
+}
+
+export async function getCertificates(
+  cn: string,
+  { bin, passwordFile, configFile }: OpenSSLConfig
+): Promise<Array<CertificateDatabase>> {
+  if (!configFile) {
+    throw new Error("No Open SSL config file set");
+  }
+
+  // Update the DB first
+  await openssl(
+    [
+      "ca",
+      "-config",
+      `${configFile}`,
+      "-passin",
+      `file:${passwordFile}`,
+      "-updatedb"
+    ],
+    bin
+  );
+  const configDir = dirname(configFile);
+  const file = await readFile(`${configDir}/index.txt`);
+
+  return file
+    .toString("utf-8")
+    .split("\n")
+    .reduce<Array<CertificateDatabase>>((certificates, line) => {
+      const [
+        status,
+        expiration,
+        revokation,
+        serial,
+        _filename,
+        subject
+      ] = line.split(/\t/);
+
+      if (status) {
+        const certificate: CertificateDatabase = {
+          status:
+            status === "V" ? "valid" : status === "R" ? "revoked" : "expired",
+          expiration: new Date(Date.parse(expiration)),
+          revokation: new Date(Date.parse(revokation)),
+          serial,
+          subject
+        };
+        return [...certificates, certificate];
+      }
+
+      return certificates;
+    }, [])
+    .filter((certificate) =>
+      certificate.subject
+        .split("/")
+        .find((component) => component === `CN=${cn}`)
+    );
+}
+
+export async function revoke(
+  serial: string,
+  { bin, passwordFile, configFile }: OpenSSLConfig
+): Promise<void> {
+  if (!configFile) {
+    throw new Error("No Open SSL config file set");
+  }
+  const configDir = dirname(configFile);
+
+  const stdio = await openssl(
+    [
+      "ca",
+      "-config",
+      `${configFile}`,
+      "-passin",
+      `file:${passwordFile}`,
+      "-revoke",
+      `${configDir}/newcerts/${serial}.pem`
+    ],
+    bin
+  );
+
+  logger.info(stdio.toString());
 }
