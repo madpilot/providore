@@ -50,6 +50,7 @@ describe("csrHandler", () => {
     await rimraf(join(openSSLPath, "index.txt*"));
     await rimraf(join(openSSLPath, "serial*"));
     await rimraf(join(openSSLPath, "crlnumber*"));
+    await rimraf(join(openSSLPath, "crl.pem"));
     await writeFile(join(openSSLPath, "serial"), "1000");
     await writeFile(join(openSSLPath, "index.txt"), "");
     await writeFile(join(openSSLPath, "crlnumber"), "1000");
@@ -130,6 +131,62 @@ describe("csrHandler", () => {
         .trim()
         .split("\t");
       expect(status).toEqual("V");
+      expect(index).toEqual("1000");
+      expect(cn).toEqual(
+        "/C=AU/ST=Victoria/O=Providore/OU=Test/CN=abc123/emailAddress=test@example.com"
+      );
+    });
+  });
+
+  describe("Same device requests a second certificate", () => {
+    it("creates a second certificate", async () => {
+      const handler = subject();
+      await handler(req, res);
+      await handler(req, res);
+
+      const saved = await readFile(join(certificatePath, "abc123.cert.pem"));
+      const reference = await readFile(
+        join(openSSLPath, "newcerts", "1001.pem")
+      );
+
+      expect(saved.toString("utf-8")).toEqual(reference.toString("utf-8"));
+
+      expect(res.send as jest.Mock).toBeCalledTimes(2);
+      expect(res.send as jest.Mock).toBeCalledWith(saved.toString("utf-8"));
+    });
+
+    it("stores the certificate in the db", async () => {
+      const handler = subject();
+      await handler(req, res);
+      await handler(req, res);
+      const db = await readFile(join(openSSLPath, "index.txt"));
+      const [_first, last] = db
+        .toString("utf-8")
+        .trim()
+        .split("\n")
+        .map((line) => line.split("\t"));
+
+      const [status, _a, _b, index, _c, cn] = last;
+      expect(status).toEqual("V");
+      expect(index).toEqual("1001");
+      expect(cn).toEqual(
+        "/C=AU/ST=Victoria/O=Providore/OU=Test/CN=abc123/emailAddress=test@example.com"
+      );
+    });
+
+    it("revokes the first certificate", async () => {
+      const handler = subject();
+      await handler(req, res);
+      await handler(req, res);
+      const db = await readFile(join(openSSLPath, "index.txt"));
+      const [first, _last] = db
+        .toString("utf-8")
+        .trim()
+        .split("\n")
+        .map((line) => line.split("\t"));
+
+      const [status, _a, _b, index, _c, cn] = first;
+      expect(status).toEqual("R");
       expect(index).toEqual("1000");
       expect(cn).toEqual(
         "/C=AU/ST=Victoria/O=Providore/OU=Test/CN=abc123/emailAddress=test@example.com"
