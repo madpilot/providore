@@ -1,25 +1,139 @@
 import { Response } from "express";
-import { sign } from "../lib/openssl";
-import { HMACRequest } from "../middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
+import { csrHandler } from "./csrHandler";
+import { readFile, writeFile } from "fs/promises";
+import _rimraf from "rimraf";
+import { join } from "path";
+
+async function rimraf(path: string): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    _rimraf(path, (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
 
 describe("csrHandler", () => {
   let req: HMACRequest;
   let res: Response;
+  let certificatePath: string;
+  let openSSLPath: string;
   let device: string;
+  let csr: string;
 
-  beforeEach(() => {
+  beforeAll(async () => {
+    const confTemplate = await readFile(
+      join(__dirname, "..", "test", "ca", "intermediate", "openssl.cnf.tmpl")
+    );
+    const rendered = confTemplate
+      .toString()
+      .replace(
+        "{{directory}}",
+        join(__dirname, "..", "test", "ca", "intermediate")
+      );
+    await writeFile(
+      join(__dirname, "..", "test", "ca", "intermediate", "openssl.cnf"),
+      rendered
+    );
+  });
+
+  beforeEach(async () => {
+    certificatePath = join(__dirname, "..", "test", "tls");
+    openSSLPath = join(__dirname, "..", "test", "ca", "intermediate");
+
+    // Reset the open ssl certificate state
+    await rimraf(join(openSSLPath, "newcerts", "*.pem"));
+    await rimraf(join(openSSLPath, "index.txt*"));
+    await rimraf(join(openSSLPath, "serial*"));
+    await rimraf(join(openSSLPath, "crlnumber*"));
+    await writeFile(join(openSSLPath, "serial"), "1000");
+    await writeFile(join(openSSLPath, "index.txt"), "");
+    await writeFile(join(openSSLPath, "crlnumber"), "1000");
+
     device = "abc123";
-    req = { device } as HMACRequest;
+    csr = (
+      await readFile(join(openSSLPath, "private", "abc123.csr.pem"))
+    ).toString("utf-8");
+    req = { device, body: csr } as HMACRequest;
     res = ({
       contentType: jest.fn(),
-      sendFile: jest.fn(),
+      send: jest.fn(),
       sendStatus: jest.fn(),
       set: jest.fn()
     } as unknown) as Response;
   });
 
-  it("does a thing", async () => {
-    const result = await sign("Hello!", device, "", {});
-    console.log(result);
+  const subject = () =>
+    csrHandler(
+      certificatePath,
+      {
+        abc123: {
+          secretKey: "secret",
+          firmware: { type: "type", version: "version" }
+        }
+      },
+      {
+        configFile: join(openSSLPath, "openssl.cnf"),
+        passwordFile: join(openSSLPath, ".pass")
+      }
+    );
+
+  describe("When a valid CSR is sent for the first time", () => {
+    it("creates a certificate", async () => {
+      const handler = subject();
+      await handler(req, res);
+
+      const saved = await readFile(join(certificatePath, "abc123.cert.pem"));
+      const reference = await readFile(
+        join(openSSLPath, "newcerts", "1000.pem")
+      );
+
+      expect(saved.toString("utf-8")).toEqual(reference.toString("utf-8"));
+
+      expect(res.send as jest.Mock).toBeCalledTimes(1);
+      expect(res.send as jest.Mock).toBeCalledWith(saved.toString("utf-8"));
+    });
+
+    it("signs the payload", async () => {
+      const handler = subject();
+      await handler(req, res);
+
+      expect(res.set as jest.Mock).toBeCalledTimes(3);
+
+      const created = (res.set as jest.Mock).mock.calls[0][1] as string;
+      const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
+
+      const data = await readFile(join(certificatePath, "abc123.cert.pem"));
+      const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
+      const signature = sign(message, "secret");
+
+      expect(res.set as jest.Mock).toBeCalledWith("signature", signature);
+    });
+
+    it("increments the serial", async () => {
+      const handler = subject();
+      await handler(req, res);
+      const serial = await readFile(join(openSSLPath, "serial"));
+      expect(serial.toString("utf-8").trim()).toEqual("1001");
+    });
+
+    it("stores the certificate in the db", async () => {
+      const handler = subject();
+      await handler(req, res);
+      const db = await readFile(join(openSSLPath, "index.txt"));
+      const [status, _a, _b, index, _c, cn] = db
+        .toString("utf-8")
+        .trim()
+        .split("\t");
+      expect(status).toEqual("V");
+      expect(index).toEqual("1000");
+      expect(cn).toEqual(
+        "/C=AU/ST=Victoria/O=Providore/OU=Test/CN=abc123/emailAddress=test@example.com"
+      );
+    });
   });
 });

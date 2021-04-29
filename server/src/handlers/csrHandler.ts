@@ -44,6 +44,7 @@ export function csrHandler(
       signPayload(res, certificate, device.secretKey);
       res.send(certificate);
     } catch (e) {
+      console.log(e);
       logger.error(e.message);
       res.sendStatus(500);
     }

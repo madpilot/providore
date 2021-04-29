@@ -256,9 +256,11 @@ export async function sign(
   if (!cn) {
     throw new Error("CN not found in the CSR");
   }
+  if (cn !== device) {
+    throw new Error("CN does not match the device name");
+  }
   logger.debug(`Checking certificate database for CN=${cn}`);
-  // Rather than device we should pull the actual CN as we can't really trust devices
-  // to do the right thing
+
   const certificates = await getCertificatesFromDatabase(cn, {
     bin,
     passwordFile,
