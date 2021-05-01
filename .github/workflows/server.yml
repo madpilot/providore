@@ -18,12 +18,11 @@ jobs:
         
     runs-on: ubuntu-latest
     steps:
-      - run: sudo apt-get install openssl
-        name: "Install OpenSSL"
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
+      - run: openssl --version
       - run: npm install
       - run: npm run lint
       - run: npm test
