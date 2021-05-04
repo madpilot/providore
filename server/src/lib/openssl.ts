@@ -85,17 +85,15 @@ export async function openssl(
   );
 
   const args = resolved.map((v) => (isString(v) ? v : v.file.path));
-  console.log(`Spawning '${bin} ${args.join(" ")}'`);
+  logger.debug(`Spawning '${bin} ${args.join(" ")}'`);
   const openSSLProcess = spawn(bin, args);
 
   openSSLProcess.stdout.on("data", (data) => {
-    console.log(data.toString());
-		stdout.push(data);
+    stdout.push(data);
   });
 
   openSSLProcess.stderr.on("data", (data) => {
-    console.log(data.toString());
-		stderr.push(data);
+    stderr.push(data);
   });
 
   // eslint-disable-next-line unused-imports/no-unused-vars
@@ -103,7 +101,7 @@ export async function openssl(
     openSSLProcess.on("close", (code) => {
       const files = resolved.filter((v) => !isString(v));
 
-      console.log(`Process returned ${code}`);
+      logger.debug(`Process returned ${code}`);
       if (files.length > 0) {
         logger.debug(
           `Removing temp files: ${files
@@ -201,27 +199,35 @@ async function getCertificatesFromDatabase(
     .filter(filterOnCn(cn));
 }
 
-async function flavour({ bin }: OpenSSLConfig): Promise<"OpenSSL" | "LibreSSL"> {
-	const result = await openssl(["version"])
-	const [ name ] = result.split(" ");
-	if (name !== "OpenSSL" && name !== "LibreSSL") {
-		throw new Error(`Unknown flavour of OpenSSL: ${name}`); 
-	}
-	return name;
+async function flavour({
+  bin
+}: OpenSSLConfig): Promise<"OpenSSL" | "LibreSSL"> {
+  const result = await openssl(["version"]);
+  const [name] = result.split(" ");
+  if (name !== "OpenSSL" && name !== "LibreSSL") {
+    throw new Error(`Unknown flavour of OpenSSL: ${name}`);
+  }
+  return name;
 }
 
 export async function getCSRSubject(
   csr: string,
   { bin }: OpenSSLConfig
 ): Promise<string> {
-  const result = await openssl(["req", "-noout", "-subject", "-in", Buffer.from(csr)], bin);
-	const f = await flavour({ bin });
-	// Probably backwards, but the LibreSSL version is easier to parse, and is the same format as index.txt
-	if(f === "OpenSSL") {
-		return result.replace(/subject=/, "subject=/").replace(/ = /g, "=").replace(/, /g, "/");
-	} else {
-		return result;
-	}
+  const result = await openssl(
+    ["req", "-noout", "-subject", "-in", Buffer.from(csr)],
+    bin
+  );
+  const f = await flavour({ bin });
+  // Probably backwards, but the LibreSSL version is easier to parse, and is the same format as index.txt
+  if (f === "OpenSSL") {
+    return result
+      .replace(/subject=/, "subject=/")
+      .replace(/ = /g, "=")
+      .replace(/, /g, "/");
+  } else {
+    return result;
+  }
 }
 
 export async function updateDB({
