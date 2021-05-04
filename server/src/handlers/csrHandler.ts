@@ -1,14 +1,52 @@
+import { OpenSSLConfig } from "config";
 import { Response } from "express";
-import { HMACRequest } from "middleware/hmac";
+import { logger } from "../logger";
+import { sign } from "../lib/openssl";
+import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
 
-export function csrHandler(): (req: HMACRequest, res: Response) => void {
-  return async (_req, res) => {
-    res.send("CSR required");
-    // See: https://jamielinux.com/docs/openssl-certificate-authority/index.html
-    // Write out the CSR, then
-    // 1. If revoking, revoke the cert (This could be an configuration option?)
-    // 2. Create a new certificate using the following
-    //    openssl ca -config <path/to/openssl.cnf -batch -passin pass:<password>> -extensions usr_cert -notext -md sha256 -in <path/to/csr> -out <path/to/cert>
-    // 3. Stream the new certificate back
+interface Params {
+  csr?: string;
+}
+
+export function csrHandler(
+  certificateStore: string,
+  devices: Devices,
+  openSSL: OpenSSLConfig
+): (req: HMACRequest<Params>, res: Response) => void {
+  return async (req, res) => {
+    try {
+      if (!req.device) {
+        res.sendStatus(404);
+        return;
+      }
+      const device = devices[req.device];
+      if (!device) {
+        logger.warn("CSR Handler: Device not found");
+        res.sendStatus(404);
+        return;
+      }
+
+      const csr = req.body;
+      if (!csr) {
+        logger.warn("CSR Handler: CSR param not set");
+        res.sendStatus(404);
+        return;
+      }
+
+      const certificate = await sign(
+        csr,
+        req.device,
+        certificateStore,
+        openSSL
+      );
+
+      res.contentType("application/x-pem-file");
+      signPayload(res, certificate, device.secretKey);
+      res.send(certificate);
+    } catch (e) {
+      console.log(e);
+      logger.error(e.message);
+      res.sendStatus(500);
+    }
   };
 }

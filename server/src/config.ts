@@ -1,10 +1,10 @@
-import { readFile } from "fs/promises";
+import { readFile, stat } from "fs/promises";
+import { logger } from "./logger";
 import { SyslogTransportOptions } from "winston-syslog";
 import {
   ConsoleTransportOptions,
   FileTransportOptions
 } from "winston/lib/winston/transports";
-
 export interface HTTPConfig {
   protocol: "http" | "https";
   bind: string;
@@ -27,29 +27,54 @@ export interface LoggerConfig {
   console?: ConsoleTransportOptions;
 }
 
+export interface OpenSSLConfig {
+  bin?: string;
+  passwordFile?: string;
+  configFile?: string;
+}
+
 export interface Config extends StoreConfig {
   config: string;
   webserver: HTTPConfig;
   logging: LoggerConfig;
+  openSSL: OpenSSLConfig;
 }
 
-export async function load(config: string | undefined): Promise<Config> {
-  const pathCascade = ["/etc/providore", `${process.env.HOME}/.providore`];
-  if (config) {
-    pathCascade.unshift(config);
-  }
+const CONFIG_PATHS = ["/etc/providore", `${process.env.HOME}/.providore`];
+
+export async function resolveConfigPaths(
+  filename: string,
+  pathCascade = CONFIG_PATHS
+): Promise<string | undefined> {
   while (pathCascade.length > 0) {
     try {
       const path = pathCascade.shift();
-      const data = await readFile(`${path}/config.json`, {
-        encoding: "utf-8"
-      });
-      return { ...JSON.parse(data), config: path };
+      await stat(`${path}/${filename}`);
+      return `${path}/${filename}`;
     } catch (e) {
       if (e.code !== "ENOENT") {
-        throw new Error(`Unable to load the configuration file: ${e.message}`);
+        logger.warn(`Unable to resolve file ${e.message}`);
       }
     }
   }
-  throw new Error("Configuration folder not found");
+  return undefined;
+}
+
+export async function load(config: string | undefined): Promise<Config> {
+  const pathCascade = [...CONFIG_PATHS];
+  let configFile: string | undefined;
+  if (config) {
+    configFile = config;
+  } else {
+    configFile = await resolveConfigPaths("config.json", pathCascade);
+  }
+
+  if (configFile) {
+    const data = await readFile(configFile, {
+      encoding: "utf-8"
+    });
+    return { ...JSON.parse(data), config: configFile };
+  } else {
+    throw new Error("Configuration file not found");
+  }
 }
