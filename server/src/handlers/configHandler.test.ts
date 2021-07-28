@@ -22,17 +22,19 @@ describe("configHandler", () => {
     configHandler(storePath, {
       abc123: {
         secretKey: "secret",
-        firmware: { type: "type", version: "version" }
+        firmware: [{ type: "type", version: "2.0.0", config: "1.0.0" }]
       }
     });
 
   let req: HMACRequest;
   let res: Response;
   let device: string;
+  let firmware: string;
 
   beforeEach(() => {
     device = "abc123";
-    req = { device } as HMACRequest;
+    firmware = "1.0.0";
+    req = { device, firmware } as HMACRequest;
     res = ({
       contentType: jest.fn(),
       sendFile: jest.fn(),

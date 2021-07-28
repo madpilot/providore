@@ -4,12 +4,16 @@ import { isPast, parseISO } from "date-fns";
 import { logger } from "../logger";
 import * as core from "express-serve-static-core";
 
+export interface Firmware {
+  type: string;
+  version: string;
+  config: string;
+  next?: string;
+}
+
 export interface Device {
   secretKey: string;
-  firmware: {
-    type: string;
-    version: string;
-  };
+  firmware: Array<Firmware>;
 }
 
 export type Devices = Record<string, Device>;
@@ -32,6 +36,7 @@ export interface HMACRequest<
   Locals extends Record<string, any> = Record<string, any>
 > extends Request<P, ResBody, ReqBody, ReqQuery, Locals> {
   device?: string;
+  version?: string;
 }
 
 export function sign(message: string | Buffer, secret: string): string {

@@ -14,7 +14,19 @@ export function configHandler(
       return;
     }
     const device = devices[req.device];
-    const filePath = path.join(configStore, `${req.device}.json`);
+    const firmware = device.firmware.find((f) => f.version === req.version);
+
+    if (!firmware) {
+      logger.debug("Firmware version not found");
+      res.sendStatus(404);
+      return;
+    }
+
+    const filePath = path.join(
+      configStore,
+      req.device,
+      `${firmware.config}.json`
+    );
 
     try {
       res.contentType("json");
