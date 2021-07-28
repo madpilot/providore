@@ -28,14 +28,8 @@ export async function startServer({
   firmwareStore,
   openSSL
 }: Config) {
-  const {
-    protocol,
-    bind,
-    port,
-    sslCertPath,
-    sslKeyPath,
-    caCertPath
-  } = webserver;
+  const { protocol, bind, port, sslCertPath, sslKeyPath, caCertPath } =
+    webserver;
 
   try {
     const devices = await loadDevices(configStore);
