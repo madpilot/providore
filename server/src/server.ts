@@ -42,19 +42,17 @@ export async function startServer({
 
     app.use(hmacAuthorization(devices));
 
-    app.get("/config.json", configHandler(configStore, devices));
+    app.get("/config", configHandler(configStore, devices));
+
     if (certificateStore) {
       app.post(
         "/certificates/request",
         csrHandler(certificateStore, devices, openSSL)
       );
-      app.get(
-        "/client.cert.pem",
-        certificateHandler(certificateStore, devices)
-      );
+      app.get("/certificate", certificateHandler(certificateStore, devices));
     }
     if (firmwareStore) {
-      app.get("/firmware.bin", firmwareHandler(firmwareStore, devices));
+      app.get("/firmware", firmwareHandler(firmwareStore, devices));
     }
 
     if (protocol === "https") {

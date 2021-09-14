@@ -4,7 +4,6 @@ import { Response } from "express";
 import { HMACRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
-import { ConfigParams } from "types";
 
 class MockError extends Error {
   public message: string;
@@ -35,7 +34,7 @@ describe("configHandler", () => {
       }
     });
 
-  let req: HMACRequest<ConfigParams>;
+  let req: HMACRequest;
   let res: Response;
   let device: string;
   let version: string;
@@ -43,7 +42,10 @@ describe("configHandler", () => {
   beforeEach(() => {
     device = "abc123";
     version = "1.0.0";
-    req = { device, params: { version } } as HMACRequest<ConfigParams>;
+    req = {
+      device,
+      get: (str) => ({ "x-firmware-version": version }[str])
+    } as HMACRequest;
     res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),
@@ -54,21 +56,7 @@ describe("configHandler", () => {
 
   describe("no params", () => {
     it("returns a 400", async () => {
-      req = { device } as HMACRequest<ConfigParams>;
-      const handler = subject();
-      await handler(req, res);
-
-      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
-      expect(res.sendStatus as jest.Mock).toBeCalledWith(400);
-    });
-  });
-
-  describe("no version params", () => {
-    it("returns a 400", async () => {
-      req = {
-        device,
-        params: { s: "1" }
-      } as unknown as HMACRequest<ConfigParams>;
+      req = { device, get: () => undefined } as unknown as HMACRequest;
       const handler = subject();
       await handler(req, res);
 
