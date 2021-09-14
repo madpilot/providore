@@ -1,7 +1,7 @@
 import { configHandler } from "./configHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { HMACRequest, sign } from "../middleware/hmac";
+import { ProvidoreRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
 
@@ -34,7 +34,7 @@ describe("configHandler", () => {
       }
     });
 
-  let req: HMACRequest;
+  let req: ProvidoreRequest;
   let res: Response;
   let device: string;
   let version: string;
@@ -42,7 +42,7 @@ describe("configHandler", () => {
   beforeEach(() => {
     device = "abc123";
     version = "1.0.0";
-    req = { device, version } as HMACRequest;
+    req = { device, version } as ProvidoreRequest;
     res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),

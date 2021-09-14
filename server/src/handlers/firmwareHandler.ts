@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
+import { Devices, ProvidoreRequest, signPayload } from "../middleware/hmac";
 import path from "path";
 import { readFile } from "fs/promises";
 import { logger } from "../logger";
@@ -7,7 +7,7 @@ import { logger } from "../logger";
 export function firmwareHandler(
   firmwareStore: string,
   devices: Devices
-): (req: HMACRequest, res: Response) => void {
+): (req: ProvidoreRequest, res: Response) => void {
   return async (req, res) => {
     if (!req.device) {
       res.sendStatus(404);

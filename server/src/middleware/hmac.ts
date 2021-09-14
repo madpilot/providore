@@ -28,7 +28,7 @@ function isAuthorizationObject(obj: any): obj is AuthorizationObject {
     typeof obj["key-id"] !== "undefined" && typeof obj.signature !== "undefined"
   );
 }
-export interface HMACRequest<
+export interface ProvidoreRequest<
   P = core.ParamsDictionary,
   ResBody = any,
   ReqBody = any,
@@ -70,7 +70,7 @@ export function signPayload(
 }
 
 export function hmacAuthorization(devices: Devices) {
-  return (req: HMACRequest, res: Response, next: NextFunction): void => {
+  return (req: ProvidoreRequest, res: Response, next: NextFunction): void => {
     const authorizationHeader = req.get("authorization");
 
     if (!authorizationHeader) {

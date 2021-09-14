@@ -1,8 +1,8 @@
-import { Devices, hmacAuthorization, HMACRequest, sign } from "./hmac";
+import { Devices, hmacAuthorization, ProvidoreRequest, sign } from "./hmac";
 import { Response, NextFunction } from "express";
 
 describe("hmac middleware", () => {
-  let req: HMACRequest;
+  let req: ProvidoreRequest;
   let res: Response;
   let nextFunction: NextFunction;
 
@@ -19,18 +19,18 @@ describe("hmac middleware", () => {
 
   beforeEach(() => {
     nextFunction = jest.fn();
-    res = ({
+    res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),
       sendStatus: jest.fn()
-    } as unknown) as Response;
+    } as unknown as Response;
   });
 
   describe("no authorization header", () => {
     beforeEach(() => {
-      req = ({
+      req = {
         get: jest.fn(() => undefined)
-      } as unknown) as HMACRequest;
+      } as unknown as ProvidoreRequest;
     });
 
     it("returns a 400", () => {
@@ -56,7 +56,7 @@ describe("hmac middleware", () => {
 
   describe("Unsupported authorization header", () => {
     beforeEach(() => {
-      req = ({
+      req = {
         get: jest.fn((header) => {
           switch (header) {
             case "authorization":
@@ -65,7 +65,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown) as HMACRequest;
+      } as unknown as ProvidoreRequest;
     });
 
     it("returns a 400", () => {
@@ -91,7 +91,7 @@ describe("hmac middleware", () => {
 
   describe("Invalid Hmac authorization header", () => {
     beforeEach(() => {
-      req = ({
+      req = {
         get: jest.fn((header) => {
           switch (header) {
             case "authorization":
@@ -100,7 +100,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown) as HMACRequest;
+      } as unknown as ProvidoreRequest;
     });
 
     it("returns a 401", () => {
@@ -128,7 +128,7 @@ describe("hmac middleware", () => {
       const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
       const signature = sign(message, "secret");
 
-      req = ({
+      req = {
         method: "get",
         path: "path",
         get: jest.fn((header) => {
@@ -143,7 +143,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown) as HMACRequest;
+      } as unknown as ProvidoreRequest;
     });
 
     it("returns a 400", () => {
@@ -175,7 +175,7 @@ describe("hmac middleware", () => {
       const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
       const signature = sign(message, "secret");
 
-      req = ({
+      req = {
         method: "get",
         path: "path",
         get: jest.fn((header) => {
@@ -190,7 +190,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown) as HMACRequest;
+      } as unknown as ProvidoreRequest;
     });
 
     it("returns a 400", () => {
@@ -222,7 +222,7 @@ describe("hmac middleware", () => {
       const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
       const signature = sign(message, "secret");
 
-      req = ({
+      req = {
         method: "get",
         path: "path",
         get: jest.fn((header) => {
@@ -237,7 +237,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown) as HMACRequest;
+      } as unknown as ProvidoreRequest;
     });
 
     it("returns a 401", () => {
@@ -270,7 +270,7 @@ describe("hmac middleware", () => {
         const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
         const signature = sign(message, "secret");
 
-        req = ({
+        req = {
           method: "get",
           path: "path",
           get: jest.fn((header) => {
@@ -285,7 +285,7 @@ describe("hmac middleware", () => {
                 return undefined;
             }
           })
-        } as unknown) as HMACRequest;
+        } as unknown as ProvidoreRequest;
       });
 
       it("returns a 401", () => {
@@ -313,7 +313,7 @@ describe("hmac middleware", () => {
         const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
         const signature = sign(message, "notsecret");
 
-        req = ({
+        req = {
           method: "get",
           path: "path",
           get: jest.fn((header) => {
@@ -328,7 +328,7 @@ describe("hmac middleware", () => {
                 return undefined;
             }
           })
-        } as unknown) as HMACRequest;
+        } as unknown as ProvidoreRequest;
       });
 
       it("returns a 401", () => {
@@ -356,7 +356,7 @@ describe("hmac middleware", () => {
         const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
         const signature = sign(message, "secret");
 
-        req = ({
+        req = {
           method: "get",
           path: "path",
           get: jest.fn((header) => {
@@ -371,7 +371,7 @@ describe("hmac middleware", () => {
                 return undefined;
             }
           })
-        } as unknown) as HMACRequest;
+        } as unknown as ProvidoreRequest;
       });
 
       it("sets the device", () => {

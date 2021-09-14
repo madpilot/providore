@@ -1,7 +1,7 @@
 import { firmwareHandler } from "./firmwareHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { HMACRequest, sign } from "../middleware/hmac";
+import { ProvidoreRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
 
@@ -26,23 +26,23 @@ describe("firmwareHandler", () => {
       }
     });
 
-  let req: HMACRequest;
+  let req: ProvidoreRequest;
   let res: Response;
   let device: string;
 
   beforeEach(() => {
-    res = ({
+    res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),
       sendStatus: jest.fn(),
       set: jest.fn()
-    } as unknown) as Response;
+    } as unknown as Response;
   });
 
   describe("when the device does not exist", () => {
     beforeEach(() => {
       device = "xyz123";
-      req = { device } as HMACRequest;
+      req = { device } as ProvidoreRequest;
     });
 
     it("returns a 404", async () => {
@@ -62,7 +62,7 @@ describe("firmwareHandler", () => {
   describe("when the device exists", () => {
     beforeEach(() => {
       device = "abc123";
-      req = { device } as HMACRequest;
+      req = { device } as ProvidoreRequest;
     });
 
     it("sets the content type to application/octet-stream", async () => {

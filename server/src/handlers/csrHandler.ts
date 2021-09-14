@@ -2,7 +2,7 @@ import { OpenSSLConfig } from "config";
 import { Response } from "express";
 import { logger } from "../logger";
 import { sign } from "../lib/openssl";
-import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
+import { Devices, ProvidoreRequest, signPayload } from "../middleware/hmac";
 
 interface Params {
   csr?: string;
@@ -12,7 +12,7 @@ export function csrHandler(
   certificateStore: string,
   devices: Devices,
   openSSL: OpenSSLConfig
-): (req: HMACRequest<Params>, res: Response) => void {
+): (req: ProvidoreRequest<Params>, res: Response) => void {
   return async (req, res) => {
     try {
       if (!req.device) {
