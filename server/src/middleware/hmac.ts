@@ -103,6 +103,13 @@ export function hmacAuthorization(devices: Devices) {
       return next("router");
     }
 
+    const version = req.get("x-firmware-version");
+    if (!version) {
+      logger.error("Missing x-firmware-version header");
+      res.sendStatus(401);
+      return next("router");
+    }
+
     const requestCreatedAt = req.get("created-at");
     if (!requestCreatedAt) {
       logger.error("Missing created-at header");

@@ -29,7 +29,14 @@ describe("hmac middleware", () => {
   describe("no authorization header", () => {
     beforeEach(() => {
       req = {
-        get: jest.fn(() => undefined)
+        get: jest.fn((header) => {
+          switch (header) {
+            case "x-firmware-version":
+              return "1.0.0";
+            default:
+              return undefined;
+          }
+        })
       } as unknown as HMACRequest;
     });
 
@@ -54,6 +61,38 @@ describe("hmac middleware", () => {
     });
   });
 
+  describe("no x-firmware-version header", () => {
+    beforeEach(() => {
+      req = {
+        get: jest.fn((header) => {
+          switch (header) {
+            case "authorization":
+              // eslint-disable-next-line quotes
+              return 'Hmac key-id="abc123", signature="signature"';
+            default:
+              return undefined;
+          }
+        })
+      } as unknown as HMACRequest;
+    });
+
+    it("returns a 401", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(401);
+    });
+
+    it("fallsback to the router", () => {
+      const middleware = subject();
+      middleware(req, res, nextFunction);
+
+      expect(nextFunction as jest.Mock).toBeCalledTimes(1);
+      expect(nextFunction as jest.Mock).toHaveBeenCalledWith("router");
+    });
+  });
+
   describe("Unsupported authorization header", () => {
     beforeEach(() => {
       req = {
@@ -61,6 +100,8 @@ describe("hmac middleware", () => {
           switch (header) {
             case "authorization":
               return "UNKNOWN abc.123";
+            case "x-firmware-version":
+              return "1.0.0";
             default:
               return undefined;
           }
@@ -96,6 +137,8 @@ describe("hmac middleware", () => {
           switch (header) {
             case "authorization":
               return "Hmac abc.123";
+            case "x-firmware-version":
+              return "1.0.0";
             default:
               return undefined;
           }
@@ -139,6 +182,8 @@ describe("hmac middleware", () => {
               return "Hello!";
             case "expiry":
               return expiry.toISOString();
+            case "x-firmware-version":
+              return "1.0.0";
             default:
               return undefined;
           }
@@ -186,6 +231,8 @@ describe("hmac middleware", () => {
               return created.toISOString();
             case "expiry":
               return "hello!";
+            case "x-firmware-version":
+              return "1.0.0";
             default:
               return undefined;
           }
@@ -233,6 +280,8 @@ describe("hmac middleware", () => {
               return created.toISOString();
             case "expiry":
               return expiry.toISOString();
+            case "x-firmware-version":
+              return "1.0.0";
             default:
               return undefined;
           }
@@ -281,6 +330,8 @@ describe("hmac middleware", () => {
                 return created.toISOString();
               case "expiry":
                 return expiry.toISOString();
+              case "x-firmware-version":
+                return "1.0.0";
               default:
                 return undefined;
             }
@@ -324,6 +375,8 @@ describe("hmac middleware", () => {
                 return created.toISOString();
               case "expiry":
                 return expiry.toISOString();
+              case "x-firmware-version":
+                return "1.0.0";
               default:
                 return undefined;
             }
@@ -367,6 +420,8 @@ describe("hmac middleware", () => {
                 return created.toISOString();
               case "expiry":
                 return expiry.toISOString();
+              case "x-firmware-version":
+                return "1.0.0";
               default:
                 return undefined;
             }
