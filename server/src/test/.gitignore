@@ -11,3 +11,4 @@ ca/intermediate/crlnumber
 ca/intermediate/crlnumber.old
 ca/intermediate/openssl.cnf
 ca/intermediate/crl.pem
+ca/intermediate/index.txt.attr.old

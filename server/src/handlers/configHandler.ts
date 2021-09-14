@@ -10,6 +10,7 @@ export function configHandler(
 ): (req: HMACRequest, res: Response) => void {
   return async (req, res) => {
     if (!req.device) {
+      logger.debug("No device in request");
       res.sendStatus(404);
       return;
     }
@@ -22,18 +23,13 @@ export function configHandler(
       return;
     }
 
-    const filePath = path.join(
-      configStore,
-      req.device,
-      `${firmware.config}.json`
-    );
+    const filePath = path.join(configStore, req.device, `${firmware.config}`);
 
     try {
-      res.contentType("json");
       const data = await readFile(filePath);
       signPayload(res, data, device.secretKey);
       res.sendFile(filePath);
-    } catch (err) {
+    } catch (err: any) {
       if (err.code === "ENOENT") {
         res.sendStatus(404);
       } else {
