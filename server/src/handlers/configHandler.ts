@@ -15,6 +15,12 @@ export function configHandler(
       res.sendStatus(404);
       return;
     }
+
+    if (!req.params?.version) {
+      logger.debug("Missing param: version");
+      res.sendStatus(400);
+      return;
+    }
     const device = devices[req.device];
     const firmware = device.firmware.find(
       (f) => f.version === req.params.version

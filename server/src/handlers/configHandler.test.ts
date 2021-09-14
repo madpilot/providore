@@ -52,6 +52,31 @@ describe("configHandler", () => {
     } as unknown as Response;
   });
 
+  describe("no params", () => {
+    it("returns a 400", async () => {
+      req = { device } as HMACRequest<ConfigParams>;
+      const handler = subject();
+      await handler(req, res);
+
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(400);
+    });
+  });
+
+  describe("no version params", () => {
+    it("returns a 400", async () => {
+      req = {
+        device,
+        params: { s: "1" }
+      } as unknown as HMACRequest<ConfigParams>;
+      const handler = subject();
+      await handler(req, res);
+
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(400);
+    });
+  });
+
   describe("when the file is found", () => {
     it("returns a 200", async () => {
       const handler = subject();
