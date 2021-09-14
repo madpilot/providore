@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
+import { Devices, ProvidoreRequest, signPayload } from "../middleware/hmac";
 import path from "path";
 import { readFile } from "fs/promises";
 import { logger } from "../logger";
@@ -7,7 +7,7 @@ import { logger } from "../logger";
 export function firmwareHandler(
   firmwareStore: string,
   devices: Devices
-): (req: HMACRequest, res: Response) => void {
+): (req: ProvidoreRequest, res: Response) => void {
   return async (req, res) => {
     if (!req.device) {
       res.sendStatus(404);
@@ -19,10 +19,11 @@ export function firmwareHandler(
       return;
     }
 
+    const [latest] = device.firmware.reverse();
     const filePath = path.join(
       firmwareStore,
-      device.firmware.type,
-      device.firmware.version,
+      latest.type,
+      latest.version,
       "firmware.bin"
     );
 
@@ -31,7 +32,7 @@ export function firmwareHandler(
       signPayload(res, data, device.secretKey);
       res.contentType("application/octet-stream");
       res.sendFile(filePath);
-    } catch (err) {
+    } catch (err: any) {
       if (err.code === "ENOENT") {
         res.sendStatus(404);
       } else {

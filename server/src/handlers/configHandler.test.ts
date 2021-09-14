@@ -1,7 +1,7 @@
 import { configHandler } from "./configHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { HMACRequest, sign } from "../middleware/hmac";
+import { ProvidoreRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
 
@@ -22,40 +22,43 @@ describe("configHandler", () => {
     configHandler(storePath, {
       abc123: {
         secretKey: "secret",
-        firmware: { type: "type", version: "version" }
+        firmware: [
+          {
+            type: "type",
+            version: "1.0.0",
+            config: "1.0.0.json",
+            next: "2.0.0"
+          },
+          { type: "type", version: "2.0.0", config: "2.0.0.json" }
+        ]
       }
     });
 
-  let req: HMACRequest;
+  let req: ProvidoreRequest;
   let res: Response;
   let device: string;
+  let version: string;
 
   beforeEach(() => {
     device = "abc123";
-    req = { device } as HMACRequest;
-    res = ({
+    version = "1.0.0";
+    req = { device, version } as ProvidoreRequest;
+    res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),
       sendStatus: jest.fn(),
       set: jest.fn()
-    } as unknown) as Response;
+    } as unknown as Response;
   });
 
   describe("when the file is found", () => {
-    it("sets the content type to JSON", async () => {
-      const handler = subject();
-      await handler(req, res);
-      expect(res.contentType as jest.Mock).toBeCalledTimes(1);
-      expect(res.contentType as jest.Mock).toBeCalledWith("json");
-    });
-
     it("returns a 200", async () => {
       const handler = subject();
       await handler(req, res);
 
       expect(res.sendFile as jest.Mock).toBeCalledTimes(1);
       expect(res.sendFile as jest.Mock).toBeCalledWith(
-        path.join(storePath, "abc123.json")
+        path.join(storePath, "abc123/1.0.0.json")
       );
     });
 
@@ -68,7 +71,7 @@ describe("configHandler", () => {
       const created = (res.set as jest.Mock).mock.calls[0][1] as string;
       const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
 
-      const data = await readFile(path.join(storePath, "abc123.json"));
+      const data = await readFile(path.join(storePath, "abc123/1.0.0.json"));
       const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
       const signature = sign(message, "secret");
 

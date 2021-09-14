@@ -4,12 +4,16 @@ import { isPast, parseISO } from "date-fns";
 import { logger } from "../logger";
 import * as core from "express-serve-static-core";
 
+export interface Firmware {
+  type: string;
+  version: string;
+  config: string;
+  next?: string;
+}
+
 export interface Device {
   secretKey: string;
-  firmware: {
-    type: string;
-    version: string;
-  };
+  firmware: Array<Firmware>;
 }
 
 export type Devices = Record<string, Device>;
@@ -24,7 +28,7 @@ function isAuthorizationObject(obj: any): obj is AuthorizationObject {
     typeof obj["key-id"] !== "undefined" && typeof obj.signature !== "undefined"
   );
 }
-export interface HMACRequest<
+export interface ProvidoreRequest<
   P = core.ParamsDictionary,
   ResBody = any,
   ReqBody = any,
@@ -32,6 +36,7 @@ export interface HMACRequest<
   Locals extends Record<string, any> = Record<string, any>
 > extends Request<P, ResBody, ReqBody, ReqQuery, Locals> {
   device?: string;
+  version?: string;
 }
 
 export function sign(message: string | Buffer, secret: string): string {
@@ -65,7 +70,7 @@ export function signPayload(
 }
 
 export function hmacAuthorization(devices: Devices) {
-  return (req: HMACRequest, res: Response, next: NextFunction): void => {
+  return (req: ProvidoreRequest, res: Response, next: NextFunction): void => {
     const authorizationHeader = req.get("authorization");
 
     if (!authorizationHeader) {

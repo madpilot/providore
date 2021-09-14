@@ -1,7 +1,7 @@
 import { certificateHandler } from "./certificateHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { HMACRequest, sign } from "../middleware/hmac";
+import { ProvidoreRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
 
@@ -22,23 +22,23 @@ describe("certificateHandler", () => {
     certificateHandler(storePath, {
       abc123: {
         secretKey: "secret",
-        firmware: { type: "type", version: "version" }
+        firmware: [{ type: "type", version: "version", config: "config" }]
       }
     });
 
-  let req: HMACRequest;
+  let req: ProvidoreRequest;
   let res: Response;
   let device: string;
 
   beforeEach(() => {
     device = "abc123";
-    req = { device } as HMACRequest;
-    res = ({
+    req = { device } as ProvidoreRequest;
+    res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),
       sendStatus: jest.fn(),
       set: jest.fn()
-    } as unknown) as Response;
+    } as unknown as Response;
   });
 
   describe("when the file is found", () => {

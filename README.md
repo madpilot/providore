@@ -50,3 +50,4 @@ In no particular order:
 - Certificates - Devices can request a x509 certificate (by generating a CSR), and can download the resulting certificate.
 - Push configuration, firmware and certificates - The ability to notify a device that it has a new configuration, firmware or certificate. Use different backends: UDP broadcast, MQTT etc
 - Web management frontend
+- ESPHome support

@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { HMACRequest, sign } from "../middleware/hmac";
+import { ProvidoreRequest, sign } from "../middleware/hmac";
 import { csrHandler } from "./csrHandler";
 import { readFile, writeFile } from "fs/promises";
 import _rimraf from "rimraf";
@@ -18,7 +18,7 @@ async function rimraf(path: string): Promise<void> {
 }
 
 describe("csrHandler", () => {
-  let req: HMACRequest;
+  let req: ProvidoreRequest;
   let res: Response;
   let certificatePath: string;
   let openSSLPath: string;
@@ -59,13 +59,13 @@ describe("csrHandler", () => {
     csr = (
       await readFile(join(openSSLPath, "private", "abc123.csr.pem"))
     ).toString("utf-8");
-    req = { device, body: csr } as HMACRequest;
-    res = ({
+    req = { device, body: csr } as ProvidoreRequest;
+    res = {
       contentType: jest.fn(),
       send: jest.fn(),
       sendStatus: jest.fn(),
       set: jest.fn()
-    } as unknown) as Response;
+    } as unknown as Response;
   });
 
   const subject = () =>
@@ -74,7 +74,7 @@ describe("csrHandler", () => {
       {
         abc123: {
           secretKey: "secret",
-          firmware: { type: "type", version: "version" }
+          firmware: [{ type: "type", version: "version", config: "config" }]
         }
       },
       {
