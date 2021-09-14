@@ -28,7 +28,8 @@ function isAuthorizationObject(obj: any): obj is AuthorizationObject {
     typeof obj["key-id"] !== "undefined" && typeof obj.signature !== "undefined"
   );
 }
-export interface ProvidoreRequest<
+
+export interface HMACRequest<
   P = core.ParamsDictionary,
   ResBody = any,
   ReqBody = any,
@@ -36,7 +37,6 @@ export interface ProvidoreRequest<
   Locals extends Record<string, any> = Record<string, any>
 > extends Request<P, ResBody, ReqBody, ReqQuery, Locals> {
   device?: string;
-  version?: string;
 }
 
 export function sign(message: string | Buffer, secret: string): string {
@@ -70,7 +70,7 @@ export function signPayload(
 }
 
 export function hmacAuthorization(devices: Devices) {
-  return (req: ProvidoreRequest, res: Response, next: NextFunction): void => {
+  return (req: HMACRequest, res: Response, next: NextFunction): void => {
     const authorizationHeader = req.get("authorization");
 
     if (!authorizationHeader) {

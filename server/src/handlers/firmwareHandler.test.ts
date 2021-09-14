@@ -1,9 +1,10 @@
 import { firmwareHandler } from "./firmwareHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { ProvidoreRequest, sign } from "../middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
+import { FirmwareParams } from "types";
 
 class MockError extends Error {
   public message: string;
@@ -30,7 +31,7 @@ describe("firmwareHandler", () => {
       }
     });
 
-  let req: ProvidoreRequest;
+  let req: HMACRequest<FirmwareParams>;
   let res: Response;
   let device: string;
 
@@ -46,7 +47,7 @@ describe("firmwareHandler", () => {
   describe("when the device does not exist", () => {
     beforeEach(() => {
       device = "xyz123";
-      req = { device } as ProvidoreRequest;
+      req = { device } as HMACRequest;
     });
 
     it("returns a 404", async () => {
@@ -65,7 +66,7 @@ describe("firmwareHandler", () => {
   describe("when the device exists", () => {
     beforeEach(() => {
       device = "abc123";
-      req = { device } as ProvidoreRequest;
+      req = { device } as HMACRequest;
     });
 
     it("sets the content type to application/octet-stream", async () => {
@@ -112,7 +113,7 @@ describe("firmwareHandler", () => {
     describe("a version is supplied", () => {
       beforeEach(() => {
         const version = "1.0.0";
-        req = { device, version } as ProvidoreRequest;
+        req = { device, params: { version } } as HMACRequest<FirmwareParams>;
       });
 
       describe("when the version is found", () => {
@@ -148,7 +149,7 @@ describe("firmwareHandler", () => {
       describe("when the version is not found", () => {
         beforeEach(() => {
           const version = "4.0.0";
-          req = { device, version } as ProvidoreRequest;
+          req = { device, params: { version } } as HMACRequest<FirmwareParams>;
         });
 
         it("returns a 404", async () => {
@@ -170,7 +171,7 @@ describe("firmwareHandler", () => {
   describe("when the file is not found", () => {
     beforeEach(() => {
       device = "abc123";
-      req = { device } as ProvidoreRequest;
+      req = { device } as HMACRequest<FirmwareParams>;
     });
 
     it("returns a 404", async () => {
@@ -190,7 +191,7 @@ describe("firmwareHandler", () => {
   describe("when there is an error reading the file", () => {
     beforeEach(() => {
       device = "abc123";
-      req = { device } as ProvidoreRequest;
+      req = { device } as HMACRequest<FirmwareParams>;
     });
 
     it("returns a 500", async () => {

@@ -1,13 +1,14 @@
 import { Response } from "express";
-import { Devices, ProvidoreRequest, signPayload } from "../middleware/hmac";
+import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
 import path from "path";
 import { readFile } from "fs/promises";
 import { logger } from "../logger";
+import { FirmwareParams } from "types";
 
 export function firmwareHandler(
   firmwareStore: string,
   devices: Devices
-): (req: ProvidoreRequest, res: Response) => void {
+): (req: HMACRequest<FirmwareParams>, res: Response) => void {
   return async (req, res) => {
     if (!req.device) {
       res.sendStatus(404);
@@ -18,7 +19,7 @@ export function firmwareHandler(
       res.sendStatus(404);
       return;
     }
-    const version = req.version || device.firmware.reverse()[0].version;
+    const version = req.params?.version || device.firmware.reverse()[0].version;
     if (!version) {
       res.sendStatus(404);
       return;

@@ -1,9 +1,10 @@
 import { configHandler } from "./configHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { ProvidoreRequest, sign } from "../middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
+import { ConfigParams } from "types";
 
 class MockError extends Error {
   public message: string;
@@ -34,7 +35,7 @@ describe("configHandler", () => {
       }
     });
 
-  let req: ProvidoreRequest;
+  let req: HMACRequest<ConfigParams>;
   let res: Response;
   let device: string;
   let version: string;
@@ -42,7 +43,7 @@ describe("configHandler", () => {
   beforeEach(() => {
     device = "abc123";
     version = "1.0.0";
-    req = { device, version } as ProvidoreRequest;
+    req = { device, params: { version } } as HMACRequest<ConfigParams>;
     res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),

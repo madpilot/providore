@@ -1,7 +1,7 @@
 import { certificateHandler } from "./certificateHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { ProvidoreRequest, sign } from "../middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
 
@@ -26,13 +26,13 @@ describe("certificateHandler", () => {
       }
     });
 
-  let req: ProvidoreRequest;
+  let req: HMACRequest;
   let res: Response;
   let device: string;
 
   beforeEach(() => {
     device = "abc123";
-    req = { device } as ProvidoreRequest;
+    req = { device } as HMACRequest;
     res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),

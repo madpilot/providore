@@ -1,8 +1,8 @@
-import { Devices, hmacAuthorization, ProvidoreRequest, sign } from "./hmac";
+import { Devices, hmacAuthorization, HMACRequest, sign } from "./hmac";
 import { Response, NextFunction } from "express";
 
 describe("hmac middleware", () => {
-  let req: ProvidoreRequest;
+  let req: HMACRequest;
   let res: Response;
   let nextFunction: NextFunction;
 
@@ -30,7 +30,7 @@ describe("hmac middleware", () => {
     beforeEach(() => {
       req = {
         get: jest.fn(() => undefined)
-      } as unknown as ProvidoreRequest;
+      } as unknown as HMACRequest;
     });
 
     it("returns a 400", () => {
@@ -65,7 +65,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown as ProvidoreRequest;
+      } as unknown as HMACRequest;
     });
 
     it("returns a 400", () => {
@@ -100,7 +100,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown as ProvidoreRequest;
+      } as unknown as HMACRequest;
     });
 
     it("returns a 401", () => {
@@ -143,7 +143,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown as ProvidoreRequest;
+      } as unknown as HMACRequest;
     });
 
     it("returns a 400", () => {
@@ -190,7 +190,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown as ProvidoreRequest;
+      } as unknown as HMACRequest;
     });
 
     it("returns a 400", () => {
@@ -237,7 +237,7 @@ describe("hmac middleware", () => {
               return undefined;
           }
         })
-      } as unknown as ProvidoreRequest;
+      } as unknown as HMACRequest;
     });
 
     it("returns a 401", () => {
@@ -285,7 +285,7 @@ describe("hmac middleware", () => {
                 return undefined;
             }
           })
-        } as unknown as ProvidoreRequest;
+        } as unknown as HMACRequest;
       });
 
       it("returns a 401", () => {
@@ -328,7 +328,7 @@ describe("hmac middleware", () => {
                 return undefined;
             }
           })
-        } as unknown as ProvidoreRequest;
+        } as unknown as HMACRequest;
       });
 
       it("returns a 401", () => {
@@ -371,7 +371,7 @@ describe("hmac middleware", () => {
                 return undefined;
             }
           })
-        } as unknown as ProvidoreRequest;
+        } as unknown as HMACRequest;
       });
 
       it("sets the device", () => {

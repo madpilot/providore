@@ -1,13 +1,14 @@
 import { Response } from "express";
-import { Devices, ProvidoreRequest, signPayload } from "../middleware/hmac";
+import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
 import path from "path";
 import { readFile } from "fs/promises";
 import { logger } from "../logger";
+import { ConfigParams } from "types";
 
 export function configHandler(
   configStore: string,
   devices: Devices
-): (req: ProvidoreRequest, res: Response) => void {
+): (req: HMACRequest<ConfigParams>, res: Response) => void {
   return async (req, res) => {
     if (!req.device) {
       logger.debug("No device in request");
@@ -15,7 +16,9 @@ export function configHandler(
       return;
     }
     const device = devices[req.device];
-    const firmware = device.firmware.find((f) => f.version === req.version);
+    const firmware = device.firmware.find(
+      (f) => f.version === req.params.version
+    );
 
     if (!firmware) {
       logger.debug("Firmware version not found");
