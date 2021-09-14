@@ -74,7 +74,7 @@ describe("csrHandler", () => {
       {
         abc123: {
           secretKey: "secret",
-          firmware: { type: "type", version: "version" }
+          firmware: [{ type: "type", version: "version", config: "config" }]
         }
       },
       {

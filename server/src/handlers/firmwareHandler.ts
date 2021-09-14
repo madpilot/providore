@@ -19,10 +19,11 @@ export function firmwareHandler(
       return;
     }
 
+    const [latest] = device.firmware.reverse();
     const filePath = path.join(
       firmwareStore,
-      device.firmware.type,
-      device.firmware.version,
+      latest.type,
+      latest.version,
       "firmware.bin"
     );
 
@@ -31,7 +32,7 @@ export function firmwareHandler(
       signPayload(res, data, device.secretKey);
       res.contentType("application/octet-stream");
       res.sendFile(filePath);
-    } catch (err) {
+    } catch (err: any) {
       if (err.code === "ENOENT") {
         res.sendStatus(404);
       } else {
