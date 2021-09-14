@@ -18,12 +18,23 @@ export function firmwareHandler(
       res.sendStatus(404);
       return;
     }
+    const version = req.version || device.firmware.reverse()[0].version;
+    if (!version) {
+      res.sendStatus(404);
+      return;
+    }
 
-    const [latest] = device.firmware.reverse();
+    const firmware = device.firmware.find((f) => f.version === version);
+
+    if (!firmware) {
+      res.sendStatus(404);
+      return;
+    }
+
     const filePath = path.join(
       firmwareStore,
-      latest.type,
-      latest.version,
+      firmware.type,
+      firmware.version,
       "firmware.bin"
     );
 
