@@ -19,8 +19,9 @@ have not been tampered with, by recalculating the signature that is attached to 
 An example HTTP/S request looks like this:
 
 ```
-GET /config.json
+GET /config
 Authorization: 'Hmac key-id="d8fa0180", signature="QuvQRPmg6Z9fjpF/+PAtrRR4arXU5AYVBCsLrOcVDm0="'
+X-Firmware-Version: '1.0.0'
 Created-At: '2021-04-09T13:01:24.154Z'
 Expiry: '2021-04-09T13:11:24.154Z'
 ```
