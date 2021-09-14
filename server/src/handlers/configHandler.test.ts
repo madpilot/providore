@@ -1,7 +1,7 @@
 import { configHandler } from "./configHandler";
 import path, { join } from "path";
 import { Response } from "express";
-import { ProvidoreRequest, sign } from "../middleware/hmac";
+import { HMACRequest, sign } from "../middleware/hmac";
 
 import { readFile } from "fs/promises";
 
@@ -34,7 +34,7 @@ describe("configHandler", () => {
       }
     });
 
-  let req: ProvidoreRequest;
+  let req: HMACRequest;
   let res: Response;
   let device: string;
   let version: string;
@@ -42,13 +42,27 @@ describe("configHandler", () => {
   beforeEach(() => {
     device = "abc123";
     version = "1.0.0";
-    req = { device, version } as ProvidoreRequest;
+    req = {
+      device,
+      get: (str) => ({ "x-firmware-version": version }[str])
+    } as HMACRequest;
     res = {
       contentType: jest.fn(),
       sendFile: jest.fn(),
       sendStatus: jest.fn(),
       set: jest.fn()
     } as unknown as Response;
+  });
+
+  describe("no params", () => {
+    it("returns a 400", async () => {
+      req = { device, get: () => undefined } as unknown as HMACRequest;
+      const handler = subject();
+      await handler(req, res);
+
+      expect(res.sendStatus as jest.Mock).toBeCalledTimes(1);
+      expect(res.sendStatus as jest.Mock).toBeCalledWith(400);
+    });
   });
 
   describe("when the file is found", () => {

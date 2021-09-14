@@ -19,14 +19,15 @@ have not been tampered with, by recalculating the signature that is attached to 
 An example HTTP/S request looks like this:
 
 ```
-GET /config.json
+GET /config
 Authorization: 'Hmac key-id="d8fa0180", signature="QuvQRPmg6Z9fjpF/+PAtrRR4arXU5AYVBCsLrOcVDm0="'
+X-Firmware-Version: '1.0.0'
 Created-At: '2021-04-09T13:01:24.154Z'
 Expiry: '2021-04-09T13:11:24.154Z'
 ```
 
 The `key-id` is a unique id that identifies the device - it is also uploaded when the bootstap firmware is uploaded. The signature is calculated by taking the SHA254-HMAC hash
-of the the HTTP method, the HTTP path, the created-at date and the expiry date, signed using the pre-shared key.
+of the the HTTP method, the HTTP path, the created-at date, the expiry date, and the current firmware version, signed using the pre-shared key.
 
 The response also includes a created-at and expiry header, as well as a signature header. The response signature is the SHA254-HMAC hash of the payload body, the created-at date
 and the expiry date, signed using the pre-shared key.
