@@ -55,3 +55,39 @@ export function firmwareHandler(
     }
   };
 }
+
+export function checkUpdateHandler(
+  devices: Devices
+): (req: HMACRequest, res: Response) => void {
+  return async (req, res) => {
+    if (!req.device) {
+      res.sendStatus(404);
+      return;
+    }
+    const device = devices[req.device];
+    if (!device) {
+      res.sendStatus(404);
+      return;
+    }
+    const version = req.get("x-firmware-version");
+    if (!version) {
+      logger.debug("Missing X-Firmware-Version header");
+      res.sendStatus(404);
+      return;
+    }
+
+    const firmware = device.firmware.find((f) => f.version === version);
+
+    if (!firmware) {
+      logger.debug("Firmware not found");
+      res.sendStatus(404);
+      return;
+    }
+
+    if (firmware.next) {
+      res.redirect(`/firmware?version=${firmware.next}`, 302);
+    } else {
+      res.sendStatus(204);
+    }
+  };
+}
