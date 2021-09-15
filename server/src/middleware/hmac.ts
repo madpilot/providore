@@ -3,20 +3,7 @@ import crypto from "crypto";
 import { isPast, parseISO } from "date-fns";
 import { logger } from "../logger";
 import * as core from "express-serve-static-core";
-
-export interface Firmware {
-  type: string;
-  version: string;
-  config: string;
-  next?: string;
-}
-
-export interface Device {
-  secretKey: string;
-  firmware: Array<Firmware>;
-}
-
-export type Devices = Record<string, Device>;
+import { Devices } from "../types";
 
 interface AuthorizationObject {
   "key-id": string;

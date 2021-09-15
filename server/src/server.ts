@@ -1,5 +1,6 @@
 import express from "express";
-import { Devices, hmacAuthorization } from "./middleware/hmac";
+import { hmacAuthorization } from "./middleware/hmac";
+import { Devices } from "./types";
 import { readFile } from "fs/promises";
 
 import http from "http";

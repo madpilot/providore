@@ -1,5 +1,6 @@
 import { Response } from "express";
-import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
+import { HMACRequest, signPayload } from "../middleware/hmac";
+import { Devices } from "../types";
 import path from "path";
 import { readFile } from "fs/promises";
 import { logger } from "../logger";
@@ -36,7 +37,7 @@ export function firmwareHandler(
       firmwareStore,
       firmware.type,
       firmware.version,
-      "firmware.bin"
+      firmware.file
     );
 
     try {

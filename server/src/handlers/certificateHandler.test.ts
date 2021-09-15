@@ -22,7 +22,14 @@ describe("certificateHandler", () => {
     certificateHandler(storePath, {
       abc123: {
         secretKey: "secret",
-        firmware: [{ type: "type", version: "version", config: "config" }]
+        firmware: [
+          {
+            type: "type",
+            version: "version",
+            config: "config",
+            file: "firmware.bin"
+          }
+        ]
       }
     });
 

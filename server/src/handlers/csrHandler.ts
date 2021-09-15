@@ -2,7 +2,8 @@ import { OpenSSLConfig } from "config";
 import { Response } from "express";
 import { logger } from "../logger";
 import { sign } from "../lib/openssl";
-import { Devices, HMACRequest, signPayload } from "../middleware/hmac";
+import { HMACRequest, signPayload } from "../middleware/hmac";
+import { Devices } from "../types";
 
 interface Params {
   csr?: string;

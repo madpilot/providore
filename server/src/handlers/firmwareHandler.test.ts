@@ -24,9 +24,24 @@ describe("firmwareHandler", () => {
       abc123: {
         secretKey: "secret",
         firmware: [
-          { type: "type", version: "1.0.0", config: "config" },
-          { type: "type", version: "1.0.1", config: "config" },
-          { type: "type", version: "2.0.0", config: "config" }
+          {
+            type: "type",
+            version: "1.0.0",
+            config: "config",
+            file: "firmware.bin"
+          },
+          {
+            type: "type",
+            version: "1.0.1",
+            config: "config",
+            file: "firmware.bin"
+          },
+          {
+            type: "type",
+            version: "2.0.0",
+            config: "config",
+            file: "firmware.bin"
+          }
         ]
       }
     });

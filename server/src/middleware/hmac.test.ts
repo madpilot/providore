@@ -1,4 +1,5 @@
-import { Devices, hmacAuthorization, HMACRequest, sign } from "./hmac";
+import { hmacAuthorization, HMACRequest, sign } from "./hmac";
+import { Devices } from "../types";
 import { Response, NextFunction } from "express";
 
 describe("hmac middleware", () => {
@@ -9,7 +10,14 @@ describe("hmac middleware", () => {
   const devices: Devices = {
     abc123: {
       secretKey: "secret",
-      firmware: [{ type: "type", version: "version", config: "config" }]
+      firmware: [
+        {
+          type: "type",
+          version: "version",
+          config: "config",
+          file: "firmware.bin"
+        }
+      ]
     }
   };
 
