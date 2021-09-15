@@ -36,7 +36,7 @@ export function firmwareHandler(
       firmwareStore,
       firmware.type,
       firmware.version,
-      "firmware.bin"
+      firmware.file
     );
 
     try {

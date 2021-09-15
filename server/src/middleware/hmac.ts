@@ -8,6 +8,7 @@ export interface Firmware {
   type: string;
   version: string;
   config: string;
+  file: string;
   next?: string;
 }
 

@@ -27,9 +27,15 @@ describe("configHandler", () => {
             type: "type",
             version: "1.0.0",
             config: "1.0.0.json",
+            file: "firmware.bin",
             next: "2.0.0"
           },
-          { type: "type", version: "2.0.0", config: "2.0.0.json" }
+          {
+            type: "type",
+            version: "2.0.0",
+            config: "2.0.0.json",
+            file: "firmware.bin"
+          }
         ]
       }
     });
