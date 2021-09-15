@@ -95,7 +95,7 @@ describe("firmwareHandler", () => {
 
     describe("no version is supplied", () => {
       describe("when the file is found", () => {
-        it("returns a 200", async () => {
+        it("return the newest firmware", async () => {
           const handler = subject();
           await handler(req, res);
 
@@ -235,13 +235,15 @@ describe("checkUpdateHandler", () => {
             type: "type",
             version: "1.0.0",
             config: "config",
-            file: "firmware.bin"
+            file: "firmware.bin",
+            next: "1.0.1"
           },
           {
             type: "type",
             version: "1.0.1",
             config: "config",
-            file: "firmware.bin"
+            file: "firmware.bin",
+            next: "2.0.0"
           },
           {
             type: "type",
@@ -309,22 +311,6 @@ describe("checkUpdateHandler", () => {
             "/firmware?version=1.0.1",
             302
           );
-        });
-
-        it("signs the payload", async () => {
-          const handler = subject();
-          await handler(req, res);
-
-          expect(res.set as jest.Mock).toBeCalledTimes(3);
-
-          const created = (res.set as jest.Mock).mock.calls[0][1] as string;
-          const expires = (res.set as jest.Mock).mock.calls[1][1] as string;
-
-          const data = await readFile(path.join(storePath, "firmware/check"));
-          const message = `${data.toString("utf-8")}\n${created}\n${expires}`;
-          const signature = sign(message, "secret");
-
-          expect(res.set as jest.Mock).toBeCalledWith("signature", signature);
         });
       });
 

@@ -7,7 +7,10 @@ import http from "http";
 import https from "https";
 import { configHandler } from "./handlers/configHandler";
 import { certificateHandler } from "./handlers/certificateHandler";
-import { firmwareHandler } from "./handlers/firmwareHandler";
+import {
+  checkUpdateHandler,
+  firmwareHandler
+} from "./handlers/firmwareHandler";
 import { csrHandler } from "./handlers/csrHandler";
 import { crlHandler } from "./handlers/crlHandler";
 import { Config } from "config";
@@ -54,6 +57,7 @@ export async function startServer({
     }
     if (firmwareStore) {
       app.get("/firmware", firmwareHandler(firmwareStore, devices));
+      app.get("/firmware/check", checkUpdateHandler(devices));
     }
 
     if (protocol === "https") {

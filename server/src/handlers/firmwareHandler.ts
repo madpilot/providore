@@ -79,6 +79,7 @@ export function checkUpdateHandler(
     const firmware = device.firmware.find((f) => f.version === version);
 
     if (!firmware) {
+      logger.debug("Firmware not found");
       res.sendStatus(404);
       return;
     }
