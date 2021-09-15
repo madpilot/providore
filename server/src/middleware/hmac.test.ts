@@ -1,4 +1,5 @@
-import { Devices, hmacAuthorization, HMACRequest, sign } from "./hmac";
+import { hmacAuthorization, HMACRequest, sign } from "./hmac";
+import { Devices } from "../types";
 import { Response, NextFunction } from "express";
 
 describe("hmac middleware", () => {
