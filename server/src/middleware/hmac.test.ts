@@ -403,10 +403,11 @@ describe("hmac middleware", () => {
 
     describe("Valid signature", () => {
       beforeEach(() => {
+        const version = "1.0.0";
         const created = new Date();
         const expiry = new Date(created.getTime() + 15 * 60 * 1000);
 
-        const message = `get\npath\n${created.toISOString()}\n${expiry.toISOString()}`;
+        const message = `get\npath\n${version}\n${created.toISOString()}\n${expiry.toISOString()}`;
         const signature = sign(message, "secret");
 
         req = {
@@ -421,7 +422,7 @@ describe("hmac middleware", () => {
               case "expiry":
                 return expiry.toISOString();
               case "x-firmware-version":
-                return "1.0.0";
+                return version;
               default:
                 return undefined;
             }

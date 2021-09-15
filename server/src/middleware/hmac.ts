@@ -147,9 +147,9 @@ export function hmacAuthorization(devices: Devices) {
       return next("router");
     }
 
-    const message = `${req.method}\n${req.path}\n${req.get(
-      "created-at"
-    )}\n${req.get("expiry")}`;
+    const message = `${req.method}\n${
+      req.path
+    }\n${version}\n${requestCreatedAt}\n${req.get("expiry")}`;
 
     const signature = sign(message, device.secretKey);
 
