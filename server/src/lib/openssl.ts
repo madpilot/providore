@@ -65,7 +65,7 @@ export async function openssl(
       .map(async (v) => {
         if (!isString(v)) {
           const stream = createWriteStream(
-            (null as unknown) as PathLike, // Null is valid when there is a file descriptor
+            null as unknown as PathLike, // Null is valid when there is a file descriptor
             { fd: v.file.fd }
           );
 
@@ -140,14 +140,8 @@ function parseDatabaseFile(
   certificates: Array<CertificateRecord>,
   line: string
 ): Array<CertificateRecord> {
-  const [
-    status,
-    expiration,
-    revokation,
-    serial,
-    _filename,
-    subject
-  ] = line.split(/\t/);
+  const [status, expiration, revokation, serial, _filename, subject] =
+    line.split(/\t/);
 
   if (status) {
     const certificate: CertificateRecord = {
@@ -200,6 +194,7 @@ async function getCertificatesFromDatabase(
 }
 
 async function flavour({
+  // eslint-disable-next-line unused-imports/no-unused-vars
   bin
 }: OpenSSLConfig): Promise<"OpenSSL" | "LibreSSL"> {
   const result = await openssl(["version"]);
