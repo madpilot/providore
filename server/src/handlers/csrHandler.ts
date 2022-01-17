@@ -44,7 +44,7 @@ export function csrHandler(
       res.contentType("application/x-pem-file");
       signPayload(res, certificate, device.secretKey);
       res.send(certificate);
-    } catch (e) {
+    } catch (e: any) {
       console.log(e);
       logger.error(e.message);
       res.sendStatus(500);

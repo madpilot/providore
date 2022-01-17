@@ -225,7 +225,6 @@ describe("firmwareHandler", () => {
 });
 
 describe("checkUpdateHandler", () => {
-  const storePath = join(__dirname, "..", "test", "store");
   const subject = () =>
     checkUpdateHandler({
       abc123: {

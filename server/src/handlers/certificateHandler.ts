@@ -21,7 +21,7 @@ export function certificateHandler(
       const data = await readFile(filePath);
       signPayload(res, data, device.secretKey);
       res.sendFile(filePath);
-    } catch (err) {
+    } catch (err: any) {
       if (err.code === "ENOENT") {
         res.sendStatus(404);
       } else {
