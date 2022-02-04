@@ -51,7 +51,7 @@ export async function resolveConfigPaths(
       const path = pathCascade.shift();
       await stat(`${path}/${filename}`);
       return `${path}/${filename}`;
-    } catch (e) {
+    } catch (e: any) {
       if (e.code !== "ENOENT") {
         logger.warn(`Unable to resolve file ${e.message}`);
       }
